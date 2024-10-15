@@ -37,8 +37,7 @@
       checks = pkgs.callPackage ./checks.nix { inherit lean-packages; };
     in
     {
-      packages = {
-        inherit (lean-packages) lean-all lean buildLeanPackage;
+      packages = lean-packages // {
         inherit (checks) example;
       };
     });
