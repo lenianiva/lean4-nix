@@ -32,7 +32,7 @@ let
     let newF = origArgs: f origArgs // {
       overrideArgs = newArgs: makeOverridableLeanPackage f (origArgs // newArgs);
     };
-    in lib.setFunctionArgs newF (lib.getFunctionArgs f) // {
+    in lib.setFunctionArgs newF (lib.functionArgs f) // {
       override = args: makeOverridableLeanPackage (f.override args);
     };
   buildLeanPackage = makeOverridableLeanPackage (callPackage (import "${src}/nix/buildLeanPackage.nix") (args // {

@@ -33,9 +33,19 @@
       "aarch64-darwin"
     ];
     perSystem = { system, pkgs, ... }: let
-      lean-packages = pkgs.callPackage (./packages.nix) { src = lean; };
-    in rec {
-      packages = lean-packages;
+      lean-packages = pkgs.callPackage ./packages.nix { src = lean; };
+      checks = pkgs.callPackage ./checks.nix { inherit lean-packages; };
+    in {
+      packages = {
+        inherit (lean-packages) lean-all lean buildLeanPackage;
+        inherit (checks) example;
+      };
+      checks = {
+        test = checks.example;
+      };
+      #checks = checks // {
+      #  lean = lean-packages.test;
+      #};
     };
   };
 }
