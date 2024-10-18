@@ -23,6 +23,7 @@
       "aarch64-linux"
       "aarch64-darwin"
     ];
+    overlay = import ./overlay.nix { inherit lean; };
   in {
     templates = {
       lib = {
@@ -31,13 +32,16 @@
       };
       default = self.templates.lib;
     };
+    overlays.default = overlay;
   } // flake-utils.lib.eachSystem systems (system: let
-      pkgs = import nixpkgs { inherit system; };
-      lean-packages = pkgs.callPackage ./packages.nix { src = lean; };
-      checks = pkgs.callPackage ./checks.nix { inherit lean-packages; };
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ overlay ];
+      };
+      checks = pkgs.callPackage ./checks.nix {};
     in
     {
-      packages = lean-packages // {
+      packages = pkgs.lean // {
         inherit (checks) example;
       };
     });

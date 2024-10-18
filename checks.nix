@@ -1,5 +1,5 @@
-{ lean-packages, pkgs, ... }: let
-  example = lean-packages.buildLeanPackage {
+{ pkgs, ... }: let
+  example = pkgs.lean.buildLeanPackage {
     name = "Example";
     roots = [ "Main" ];
     src = pkgs.lib.cleanSource ./templates/lib;
