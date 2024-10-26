@@ -23,8 +23,11 @@
       "aarch64-darwin"
     ];
     perSystem = { system, pkgs, ... }: let
-      leanPkgs = lean4-nix.packages.${system};
-      project = leanPkgs.buildLeanPackage {
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ lean4-nix.tags."v4.12.0" ];
+      };
+      project = pkgs.lean.buildLeanPackage {
         name = "Example";
         roots = [ "Main" ];
         src = pkgs.lib.cleanSource ./.;
@@ -35,7 +38,7 @@
         default = project.executable;
       };
       devShells.default = pkgs.mkShell {
-        buildInputs = [ leanPkgs.lean-all leanPkgs.lean ];
+        buildInputs = [ pkgs.lean.lean-all pkgs.lean.lean ];
       };
     };
   };
