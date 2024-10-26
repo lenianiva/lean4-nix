@@ -1,7 +1,7 @@
 let
   manifests = import ./manifests;
   readSrc = src: final: prev: prev // {
-    lean = prev.callPackage ./packages.nix { inherit src; };
+    lean = prev.callPackage ./lib/packages.nix { inherit src; };
   };
   readFromGit = args: readSrc (builtins.fetchGit args);
   readRev = rev: readFromGit {
