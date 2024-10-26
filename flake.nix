@@ -14,13 +14,7 @@
   } : flake-parts.lib.mkFlake { inherit inputs; } {
     flake = (import ./overlay.nix) // {
       lake = import ./lake.nix;
-      templates = {
-        lib = {
-          path = ./templates/lib;
-          description = "Example Lean Project";
-        };
-        default = self.templates.lib;
-      };
+      templates = import ./templates;
     };
     systems = [
       "x86_64-linux"

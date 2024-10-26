@@ -3,10 +3,10 @@
   example-direct = pkgs.lean.buildLeanPackage {
     name = "Example";
     roots = [ "Main" ];
-    src = pkgs.lib.cleanSource ./templates/lib;
+    src = pkgs.lib.cleanSource ./templates/minimal;
   };
   example-manifest = lake.mkPackage {
-    src = ./templates/lib;
+    src = ./templates/minimal;
     roots = [ "Main" ];
   };
 in {
