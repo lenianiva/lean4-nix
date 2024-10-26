@@ -1,4 +1,10 @@
 { pkgs }: let
+  capitalize = s:
+    let
+      first = pkgs.lib.toUpper (builtins.substring 0 1 s);
+      rest = builtins.substring 1 (-1) s;
+    in
+      first + rest;
   importLakeManifest = manifestFile: let
       manifest = pkgs.lib.importJSON manifestFile;
     in
@@ -14,12 +20,13 @@
   # Builds a Lean package by reading the manifest file.
   mkPackage = { src, manifestFile ? "${src}/lake-manifest.json", roots ? null } : let
     manifest = importLakeManifest manifestFile;
+    # Build all dependencies using `buildLeanPackage`
     deps = builtins.map (dep : mkPackage (depToPackage dep)) manifest.packages;
   in pkgs.lean.buildLeanPackage {
     inherit (manifest) name;
-    roots = if builtins.isNull roots then [ manifest.name ] else roots;
+    roots = if builtins.isNull roots then [ (capitalize manifest.name) ] else roots;
     src = pkgs.lib.cleanSource src;
-    inherit deps;
+    deps = deps ++ [ pkgs.lean.Init pkgs.lean.Lean ];
   };
 in {
   inherit mkPackage;
