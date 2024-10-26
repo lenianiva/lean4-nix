@@ -9,7 +9,7 @@
     };
   in {
     inherit src;
-    manifestFile = src / dep.manifestFile;
+    manifestFile = "${src}/${dep.manifestFile}";
   };
   # Builds a Lean package by reading the manifest file.
   mkPackage = { src, manifestFile ? "${src}/lake-manifest.json", roots ? null } : let
@@ -19,6 +19,7 @@
     inherit (manifest) name;
     roots = if builtins.isNull roots then [ manifest.name ] else roots;
     src = pkgs.lib.cleanSource src;
+    inherit deps;
   };
 in {
   inherit mkPackage;
