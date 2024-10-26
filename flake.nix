@@ -3,42 +3,41 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
-    flake-utils.url = "github:numtide/flake-utils";
-    lean = {
-      url = "github:leanprover/lean4?ref=v4.12.0";
-      flake = false;
-    };
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
   outputs = inputs @ {
     self,
     nixpkgs,
-    flake-utils,
-    lean,
+    flake-parts,
     ...
-  } : let
+  } : flake-parts.lib.mkFlake { inherit inputs; } {
+    flake = (import ./overlay.nix) // {
+      templates = {
+        lib = {
+          path = ./templates/lib;
+          description = "Example Lean Project";
+        };
+        default = self.templates.lib;
+      };
+    };
     systems = [
       "x86_64-linux"
       "x86_64-darwin"
       "aarch64-linux"
       "aarch64-darwin"
     ];
-  in {
-    templates = {
-      lib = {
-        path = ./templates/lib;
-        description = "Example Lean Project";
+    perSystem = { system, pkgs, ... }: let
+      overlay = import ./overlay.nix;
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ overlay.tags."v4.12.0" ];
       };
-      default = self.templates.lib;
-    };
-  } // flake-utils.lib.eachSystem systems (system: let
-      pkgs = import nixpkgs { inherit system; };
-      lean-packages = pkgs.callPackage ./packages.nix { src = lean; };
-      checks = pkgs.callPackage ./checks.nix { inherit lean-packages; };
-    in
-    {
-      packages = lean-packages // {
+      checks = pkgs.callPackage ./checks.nix {};
+    in {
+      checks = {
         inherit (checks) example;
       };
-    });
+    };
+  };
 }

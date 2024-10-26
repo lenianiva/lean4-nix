@@ -11,7 +11,31 @@ nix flake new --template github:lenianiva/lean4-nix ./$PROJECT_NAME
 
 ## Flake outputs
 
-Under `package.${system}`:
+### Overlay
+
+The user must decide on a Lean version to use as overlay. The minimal supported
+version is `v4.12.0`, since it is the version when Lean's official Nix flake was
+deprecated. There are a couple of ways to get an overlay. Each corresponds to a
+flake output:
+
+- `readSrc`: Builds Lean from a source folder.
+- `readFromGit`: Given parameters to `builtins.fetchGit`, download a git repository
+- `readRev`: Reads a revision from the official Lean 4 repository
+- `tags.{tag}`: Lean4 tags. See the available tags in `manifests/`
+
+Then apply the overlay on `pkgs`:
+```nix
+pkgs = import nixpkgs {
+  inherit system;
+  overlays = [ overlay.tags."v4.12.0" ];
+};
+```
+and `pkgs.lean` will be replaced by the chosen overlay.
+
+### `pkgs.lean`
+
+This attribute set has properties
+
 - `buildLeanPackage { name; roots; deps; src; }`: Given a directory `src`
   containing Lean files, builds a Lean package. `roots` indicates Lean files
   that are on the top of the import hierarchy. `deps` is a list of outputs of
