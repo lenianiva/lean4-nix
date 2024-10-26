@@ -13,6 +13,7 @@
     ...
   } : flake-parts.lib.mkFlake { inherit inputs; } {
     flake = (import ./overlay.nix) // {
+      lake = import ./lake.nix;
       templates = {
         lib = {
           path = ./templates/lib;
@@ -36,7 +37,7 @@
       checks = pkgs.callPackage ./checks.nix {};
     in {
       checks = {
-        inherit (checks) example;
+        inherit (checks) example-direct example-manifest;
       };
     };
   };
