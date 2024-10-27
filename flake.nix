@@ -31,7 +31,7 @@
       overlay = import ./overlay.nix;
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ overlay.tags."v4.12.0" ];
+        overlays = [ (overlay.readToolchainFile ./templates/lib/lean-toolchain) ];
       };
       checks = pkgs.callPackage ./checks.nix {};
     in {
