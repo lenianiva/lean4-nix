@@ -6,6 +6,7 @@ let
   readFromGit = args: readSrc (builtins.fetchGit args);
   readRev = rev: readFromGit {
     url = "https://github.com/leanprover/lean4.git";
+    shallow = true;
     inherit rev;
   };
   tags = builtins.mapAttrs (tag: manifest: readRev manifest.rev) manifests;
