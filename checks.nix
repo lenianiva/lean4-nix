@@ -6,11 +6,11 @@
     src = pkgs.lib.cleanSource ./templates/minimal;
   };
   minimal-manifest = lake.mkPackage {
-    src = ./templates/minimal;
+    src = pkgs.lib.cleanSource ./templates/minimal;
     roots = [ "Main" ];
   };
   dependency-manifest = lake.mkPackage {
-    src = ./templates/dependency;
+    src = pkgs.lib.cleanSource ./templates/dependency;
     roots = [ "Example" ];
   };
 in {

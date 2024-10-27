@@ -10,23 +10,32 @@
     in
       pkgs.lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + manifest.version) manifest;
   depToPackage = dep : let
-    src = builtins.fetchGit {
+    src = pkgs.lib.cleanSource (builtins.fetchGit {
       inherit (dep) url rev;
-    };
+    });
   in {
     inherit src;
     manifestFile = "${src}/${dep.manifestFile}";
   };
   # Builds a Lean package by reading the manifest file.
-  mkPackage = { src, manifestFile ? "${src}/lake-manifest.json", roots ? null } : let
+  mkPackage = {
+      # Path to the source
+      src,
+      # Path to the `lake-manifest.json` file
+      manifestFile ? "${src}/lake-manifest.json",
+      # Root module
+      roots ? null,
+      # Default dependencies
+      deps ? with pkgs.lean; [ Init Std Lean ],
+    } : let
     manifest = importLakeManifest manifestFile;
     # Build all dependencies using `buildLeanPackage`
-    deps = builtins.map (dep : mkPackage (depToPackage dep)) manifest.packages;
+    manifestDeps = builtins.map (dep : mkPackage (depToPackage dep)) manifest.packages;
   in pkgs.lean.buildLeanPackage {
     inherit (manifest) name;
+    inherit src;
     roots = if builtins.isNull roots then [ (capitalize manifest.name) ] else roots;
-    src = pkgs.lib.cleanSource src;
-    deps = deps ++ [ pkgs.lean.Init pkgs.lean.Lean ];
+    deps = deps ++ manifestDeps;
   };
 in {
   inherit mkPackage;
