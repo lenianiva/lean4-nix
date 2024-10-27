@@ -27,7 +27,7 @@
         inherit system;
         overlays = [ (lean4-nix.readToolchainFile ./lean-toolchain) ];
       };
-      project = lean4-nix.lake.mkPackage {
+      project = (lean4-nix.lake { inherit pkgs; }).mkPackage {
         src = ./.;
         roots = [ "Example" ];
         linkInitLean = true;
