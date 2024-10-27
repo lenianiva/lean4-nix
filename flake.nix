@@ -13,13 +13,8 @@
     ...
   } : flake-parts.lib.mkFlake { inherit inputs; } {
     flake = (import ./overlay.nix) // {
-      templates = {
-        lib = {
-          path = ./templates/lib;
-          description = "Example Lean Project";
-        };
-        default = self.templates.lib;
-      };
+      lake = import ./lake.nix;
+      templates = import ./templates;
     };
     systems = [
       "x86_64-linux"
@@ -31,13 +26,11 @@
       overlay = import ./overlay.nix;
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [ (overlay.readToolchainFile ./templates/lib/lean-toolchain) ];
+        overlays = [ (overlay.readToolchainFile ./templates/minimal/lean-toolchain) ];
       };
-      checks = pkgs.callPackage ./checks.nix {};
+      checks = import ./checks.nix { inherit pkgs; };
     in {
-      checks = {
-        inherit (checks) example;
-      };
+      inherit checks;
     };
   };
 }

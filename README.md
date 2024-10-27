@@ -2,11 +2,19 @@
 
 The unofficial Nix flake build for Lean 4.
 
-## Usage
+## Example
 
-Execute
+The default template is a good starting point
+
 ``` sh
-nix flake new --template github:lenianiva/lean4-nix ./$PROJECT_NAME
+nix flake new --template#minimal github:lenianiva/lean4-nix
+```
+
+The `.#dependency` template shows an example of using `lake-manifest.json` to
+fetch dependencies automatically.
+
+``` sh
+nix flake new --template#dependency github:lenianiva/lean4-nix
 ```
 
 ## Flake outputs
@@ -30,7 +38,7 @@ Then apply the overlay on `pkgs`:
 ```nix
 pkgs = import nixpkgs {
   inherit system;
-  overlays = [ overlay.tags."v4.12.0" ];
+  overlays = [ lean4-nix.tags."v4.12.0" ];
 };
 ```
 and `pkgs.lean` will be replaced by the chosen overlay.
@@ -39,16 +47,38 @@ and `pkgs.lean` will be replaced by the chosen overlay.
 
 This attribute set has properties
 
-- `buildLeanPackage { name; roots; deps; src; }`: Given a directory `src`
-  containing Lean files, builds a Lean package. `roots` indicates Lean files
-  that are on the top of the import hierarchy. `deps` is a list of outputs of
-  other `buildLeanPackage` calls.
-
-  This function outputs `{ executable; sharedLib; ... }`.
-
 - `lean`: The Lean executable
 - `lean-all`: `lean`, `lake`, and the Lean library.
 - `example`: Use `nix run .#example` to see an example of building a Lean program.
+- `Init`, `Std`, `Lean`: Lean built-in libraries provided in the same format as `buildLeanPackage`
+
+There are two functions which can be used to build Lean packages:
+
+- `buildLeanPackage { name; roots; deps; src; }`: Given a directory `src`
+  containing Lean files, builds a Lean package. `roots` indicates Lean files
+  that are on the top of the import hierarchy. `deps` is a list of outputs of
+  other `buildLeanPackage` calls. This is the more manual version.
+
+  This function outputs `{ executable; sharedLib; ... }`.
+- `mkPackage { src; roots; }`: Automatically reads the `lake-manifest.json` file
+  from a directory and builds all the dependencies.
 
 
+## Troubleshooting
 
+### attribute '"{Lean,Init}.*"' is missing
+
+If you see this error, add these packages to `deps` in either `buildLeanPackage` or `mkPackage`.
+``` nix
+{
+  deps = with pkgs.lean; [ Init Std Lean ];
+}
+```
+in the call to `buildLeanPackage`
+
+
+## Development
+
+Use `nix flake check` to check the template builds.
+
+Update the template `lean-toolchain` files when new Lean versions come out
