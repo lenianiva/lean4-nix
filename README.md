@@ -29,6 +29,9 @@ flake output:
 - `readSrc`: Builds Lean from a source folder.
 - `readFromGit`: Given parameters to `builtins.fetchGit`, download a git repository
 - `readRev`: Reads a revision from the official Lean 4 repository
+- `readToolchainFile`: Reads the toolchain from a file. Due to Nix's pure
+  evaluation principle, this only supports `leanprover/lean4:{tag}` based
+  `lean-toolchain` files. For any other toolchains, use `readRev` or `readFromGit`.
 - `tags.{tag}`: Lean4 tags. See the available tags in `manifests/`
 
 Then apply the overlay on `pkgs`:
