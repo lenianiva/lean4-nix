@@ -1,4 +1,4 @@
-{ src, pkgs, ... } @ args:
+{ src, pkgs, bootstrap, ... } @ args:
 with pkgs;
 let
   # https://github.com/NixOS/nixpkgs/issues/130963
@@ -24,7 +24,7 @@ let
     installPhase = builtins.replaceStrings ["use_response_file_by_default=1"] ["use_response_file_by_default=0"] old.installPhase;
   });
   stdenv' = if stdenv.isLinux then useGoldLinker stdenv else stdenv;
-  lean = callPackage (import ./bootstrap.nix) (args // {
+  lean = callPackage bootstrap (args // {
     stdenv = overrideCC stdenv' cc;
     inherit src buildLeanPackage llvmPackages;
   });
