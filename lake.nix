@@ -12,6 +12,7 @@
   depToPackage = dep : let
     src = pkgs.lib.cleanSource (builtins.fetchGit {
       inherit (dep) url rev;
+      shallow = true;
     });
   in {
     inherit src;
