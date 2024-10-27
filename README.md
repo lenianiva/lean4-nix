@@ -53,33 +53,48 @@ This attribute set has properties
 - `example`: Use `nix run .#example` to see an example of building a Lean program.
 - `Init`, `Std`, `Lean`: Lean built-in libraries provided in the same format as `buildLeanPackage`
 
-There are two functions which can be used to build Lean packages:
+and the function `buildLeanPackage`, which accepts a parameter set
+`{ name; roots; deps; src; }`. The complete parameter set can be found in Lean
+4's `nix/buildLeanPackage.nix` file. In general:
+- `src`: The source directory
+- `roots`: Lean modules at the root of the import tree.
+- `deps`: A list of outputs of other `buildLeanPackage` calls.
 
-- `buildLeanPackage { name; roots; deps; src; }`: Given a directory `src`
-  containing Lean files, builds a Lean package. `roots` indicates Lean files
-  that are on the top of the import hierarchy. `deps` is a list of outputs of
-  other `buildLeanPackage` calls. This is the more manual version.
+This is a form of manual dependency management.
 
-  This function outputs `{ executable; sharedLib; ... }`.
-- `mkPackage { src; roots; }`: Automatically reads the `lake-manifest.json` file
-  from a directory and builds all the dependencies.
+### `lake2nix`
 
+Use `lake2nix = lean4-nix.lake { inherit pkgs; }` to generate the lake utilities.
+
+`lake2nix.mkPackage { src; roots; }` automatically reads the
+`lake-manifest.json` file and builds dependencies.
+
+- `src`: The source directory
+- `manifestFile`: Path to the manifest file. Defaults to `${src}/lake-manifest.json`
+- `roots`: Lean modules at the root of the import tree. Defaults to the project
+  name from `manifestFile`
+- `deps`: Additional dependencies. Defaults to `[ Init Std Lean ]`.
 
 ## Troubleshooting
 
 ### attribute '"{Lean,Init}.*"' is missing
 
-If you see this error, add these packages to `deps` in either `buildLeanPackage` or `mkPackage`.
+If you see this error, add these packages to `deps` in either `buildLeanPackage`
+or `mkPackage`.
+
 ``` nix
 {
   deps = with pkgs.lean; [ Init Std Lean ];
 }
 ```
-in the call to `buildLeanPackage`
 
+### Only `leanprover/lean4:{tag}` toolchains are supported
+
+The Lean version is not listed in the `manifests/` directory. Use `readRev` or
+`readFromGit` instead.
 
 ## Development
 
 Use `nix flake check` to check the template builds.
 
-Update the template `lean-toolchain` files when new Lean versions come out
+Update the template `lean-toolchain` files when new Lean versions come out.
