@@ -4,17 +4,18 @@ The unofficial Nix flake build for Lean 4.
 
 ## Example
 
-The default template is a good starting point
+The default template is a good starting point for projects requiring manual
+dependency management:
 
 ``` sh
-nix flake new --template#minimal github:lenianiva/lean4-nix
+nix flake new --template github:lenianiva/lean4-nix ./minimal
 ```
 
 The `.#dependency` template shows an example of using `lake-manifest.json` to
 fetch dependencies automatically.
 
 ``` sh
-nix flake new --template#dependency github:lenianiva/lean4-nix
+nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 ```
 
 ## Flake outputs
