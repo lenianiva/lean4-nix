@@ -76,3 +76,9 @@ If you see this error, add these packages to `deps` in either `buildLeanPackage`
 ```
 in the call to `buildLeanPackage`
 
+
+## Development
+
+Use `nix flake check` to check the template builds.
+
+Update the template `lean-toolchain` files when new Lean versions come out
