@@ -9,6 +9,12 @@ let
     inherit rev;
   };
   tags = builtins.mapAttrs (tag: manifest: readRev manifest.rev) manifests;
+  readToolchain = toolchainFile : let
+      toolchain = builtins.readFile toolchainFile;
+      matches = builtins.match "^leanprover/lean4:(.*)$" toolchain;
+      tag = builtins.head matches;
+    in
+      builtins.getAttr tag tags;
 in {
-  inherit readSrc readFromGit readRev tags;
+  inherit readSrc readFromGit readRev tags readToolchain;
 }
