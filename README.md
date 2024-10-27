@@ -29,7 +29,7 @@ nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 ### Overlay
 
 The user must decide on a Lean version to use as overlay. The minimal supported
-version is `v4.12.0`, since it is the version when Lean's official Nix flake was
+version is `v4.11.0`, since it is the version when Lean's official Nix flake was
 deprecated. There are a couple of ways to get an overlay. Each corresponds to a
 flake output:
 
@@ -45,7 +45,7 @@ Then apply the overlay on `pkgs`:
 ```nix
 pkgs = import nixpkgs {
   inherit system;
-  overlays = [ lean4-nix.tags."v4.12.0" ];
+  overlays = [ (lean4-nix.readToolchainFile ./lean-toolchain) ];
 };
 ```
 and `pkgs.lean` will be replaced by the chosen overlay.
