@@ -1,6 +1,12 @@
 # Lean 4 Nix
 
-The unofficial Nix flake build for Lean 4.
+Nix flake build for Lean 4.
+
+Features:
+
+- Lean overlay
+- Automatically read toolchain version
+- Convert `lake-manifest.json` into Lean build
 
 ## Example
 
