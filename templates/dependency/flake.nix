@@ -30,7 +30,6 @@
       project = (lean4-nix.lake { inherit pkgs; }).mkPackage {
         src = ./.;
         roots = [ "Example" ];
-        linkInitLean = true;
       };
     in rec {
       packages = {
