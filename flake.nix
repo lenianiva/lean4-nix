@@ -29,8 +29,10 @@
         overlays = [ (overlay.readToolchainFile ./templates/minimal/lean-toolchain) ];
       };
       checks = import ./checks.nix { inherit pkgs; };
+      packages = import ./packages.nix { inherit pkgs; };
     in {
       inherit checks;
+      inherit packages;
     };
   };
 }
