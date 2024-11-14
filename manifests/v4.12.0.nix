@@ -114,7 +114,7 @@
 	      depRoots = symlinkJoin { name = "depRoots"; paths = map (l: l.depRoots) stdlib; };
 	      iTree = symlinkJoin { name = "ileans"; paths = map (l: l.iTree) stdlib; };
 	      Leanc = build { name = "Leanc"; src = lean-bin-tools-unwrapped.leanc_src; deps = stdlib; roots = [ "Leanc" ]; };
-	      stdlibLinkFlags = "${lib.concatMapStringsSep " " (l: "-L${l.staticLib}") stdlib} -L${leancpp}/lib/lean";
+	      stdlibLinkFlags = "${lib.concatMapStringsSep " " (l: "-L${l.staticLib}") stdlib} -L${leancpp}/lib/lean -L${leancpp}/lib/temp";
 	      libInit_shared = runCommand "libInit_shared" { buildInputs = [ stdenv.cc ]; libName = "libInit_shared${stdenv.hostPlatform.extensions.sharedLibrary}"; } ''
 	        mkdir $out
 	        touch empty.c
@@ -142,7 +142,7 @@
 	      '';
 	      lean = runCommand "lean" { buildInputs = lib.optional stdenv.isDarwin darwin.cctools; } ''
 	        mkdir -p $out/bin
-	        ${leanc}/bin/leanc ${leancpp}/lib/temp/libleanmain.a ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* -o $out/bin/lean
+	        ${leanc}/bin/leanc ${leancpp}/lib/temp/libleanmain.a ${if stdenv.isDarwin then "${leancpp}/lib/temp/libleanshell.a" else ""} ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* -o $out/bin/lean
 	      '';
 	      # derivation following the directory layout of the "basic" setup, mostly useful for running tests
 	      lean-all = stdenv.mkDerivation {
