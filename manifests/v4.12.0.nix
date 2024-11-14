@@ -114,7 +114,7 @@
 	      depRoots = symlinkJoin { name = "depRoots"; paths = map (l: l.depRoots) stdlib; };
 	      iTree = symlinkJoin { name = "ileans"; paths = map (l: l.iTree) stdlib; };
 	      Leanc = build { name = "Leanc"; src = lean-bin-tools-unwrapped.leanc_src; deps = stdlib; roots = [ "Leanc" ]; };
-	      stdlibLinkFlags = "${lib.concatMapStringsSep " " (l: "-L${l.staticLib}") stdlib} -L${leancpp}/lib/lean";
+	      stdlibLinkFlags = "${lib.concatMapStringsSep " " (l: "-L${l.staticLib}") stdlib} -L${leancpp}/lib/lean -L${leancpp}/lib/temp";
 	      libInit_shared = runCommand "libInit_shared" { buildInputs = [ stdenv.cc ]; libName = "libInit_shared${stdenv.hostPlatform.extensions.sharedLibrary}"; } ''
 	        mkdir $out
 	        touch empty.c
@@ -128,7 +128,9 @@
 	      leanshared = runCommand "leanshared" { buildInputs = [ stdenv.cc ]; libName = "libleanshared${stdenv.hostPlatform.extensions.sharedLibrary}"; } ''
 	        mkdir $out
 	        LEAN_CC=${stdenv.cc}/bin/cc ${lean-bin-tools-unwrapped}/bin/leanc -shared ${lib.optionalString stdenv.isLinux "-Wl,-Bsymbolic"} \
-	          -Wl,--whole-archive ${leancpp}/lib/temp/libleanshell.a -lInit -lStd -lLean -lleancpp ${leancpp}/lib/libleanrt_initial-exec.a -Wl,--no-whole-archive -lstdc++ \
+	          ${if stdenv.isDarwin
+	            then "-Wl,-force_load,${Init.staticLib}/libInit.a -Wl,-force_load,${Std.staticLib}/libStd.a -Wl,-force_load,${Lean.staticLib}/libLean.a -Wl,-force_load,${leancpp}/lib/lean/libleancpp.a ${leancpp}/lib/libleanrt_initial-exec.a ${leancpp}/lib/temp/libleanshell.a -lc++"
+						  else "-Wl,--whole-archive ${leancpp}/lib/temp/libleanshell.a -lInit -lStd -lLean -lleancpp ${leancpp}/lib/libleanrt_initial-exec.a -Wl,--no-whole-archive -lstdc++"} \
 	          -lm ${stdlibLinkFlags} \
 	          $(${llvmPackages.libllvm.dev}/bin/llvm-config --ldflags --libs) \
 	          -o $out/$libName
@@ -140,7 +142,7 @@
 	      '';
 	      lean = runCommand "lean" { buildInputs = lib.optional stdenv.isDarwin darwin.cctools; } ''
 	        mkdir -p $out/bin
-	        ${leanc}/bin/leanc ${leancpp}/lib/temp/libleanmain.a ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* -o $out/bin/lean
+	        ${leanc}/bin/leanc ${leancpp}/lib/temp/libleanmain.a ${if stdenv.isDarwin then "${leancpp}/lib/temp/libleanshell.a" else ""} ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* -o $out/bin/lean
 	      '';
 	      # derivation following the directory layout of the "basic" setup, mostly useful for running tests
 	      lean-all = stdenv.mkDerivation {
