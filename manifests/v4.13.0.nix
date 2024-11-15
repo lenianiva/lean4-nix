@@ -142,7 +142,7 @@
 	      '';
 	      lean = runCommand "lean" { buildInputs = lib.optional stdenv.isDarwin darwin.cctools; } ''
 	        mkdir -p $out/bin
-	        ${leanc}/bin/leanc ${leancpp}/lib/temp/libleanmain.a ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* -o $out/bin/lean
+	        ${leanc}/bin/leanc ${leancpp}/lib/temp/libleanmain.a ${if stdenv.isDarwin then "${leancpp}/lib/temp/libleanshell.a" else ""} ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* -o $out/bin/lean
 	      '';
 	      # derivation following the directory layout of the "basic" setup, mostly useful for running tests
 	      lean-all = stdenv.mkDerivation {
