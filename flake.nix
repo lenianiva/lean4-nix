@@ -32,6 +32,7 @@
     in {
       packages = {
         inherit (pkgs.lean) leanshared lean leanc lean-all;
+        lake = pkgs.lean.Lake-Main.executable;
       };
       inherit checks;
     };
