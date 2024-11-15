@@ -31,7 +31,7 @@
       checks = import ./checks.nix { inherit pkgs; };
     in {
       packages = {
-        inherit (pkgs.lean) leanshared lean leanc lean-all;
+        inherit (pkgs.lean) leanshared lean leanc lean-all lake;
       };
       inherit checks;
     };

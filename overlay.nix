@@ -1,7 +1,9 @@
 let
   manifests = import ./manifests;
-  readSrc = { src, bootstrap } : final: prev: prev // {
-    lean = prev.callPackage ./lib/packages.nix { inherit src bootstrap; };
+  readSrc = { src, bootstrap } : final: prev: prev // rec {
+    lean = (prev.callPackage ./lib/packages.nix { inherit src bootstrap; }) // {
+      lake = lean.Lake-Main.executable;
+    };
   };
   readFromGit = { args, bootstrap }: readSrc { src = builtins.fetchGit args; inherit bootstrap; };
   readRev = { rev, bootstrap }: readFromGit {
