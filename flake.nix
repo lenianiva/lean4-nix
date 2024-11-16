@@ -11,30 +11,28 @@
     inputs @ { self
     , nixpkgs
     , flake-parts
-    , ...
+    , systems
     }: flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = import inputs.systems;
+      systems = import systems;
 
       flake = (import ./overlay.nix) // {
         lake = import ./lake.nix;
         templates = import ./templates;
       };
 
-      perSystem = { system, pkgs, ... }:
-        let
-          overlay = import ./overlay.nix;
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ (overlay.readToolchainFile ./templates/minimal/lean-toolchain) ];
-          };
-          checks = import ./checks.nix { inherit pkgs; };
-        in
-        {
-          packages = {
-            inherit (pkgs.lean) leanshared lean leanc lean-all lake;
-          };
-          inherit checks;
-          formatter = pkgs.nixpkgs-fmt;
+      perSystem = { pkgs, system, ... }: {
+        _module.args.pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ (self.readToolchainFile ./templates/minimal/lean-toolchain) ];
         };
+
+        checks = import ./checks.nix { inherit pkgs; };
+
+        formatter = pkgs.nixpkgs-fmt;
+
+        packages = {
+          inherit (pkgs.lean) leanshared lean leanc lean-all lake;
+        };
+      };
     };
 }
