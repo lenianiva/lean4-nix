@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    systems.url = "github:nix-systems/default";
   };
 
   outputs =
@@ -12,16 +13,13 @@
     , flake-parts
     , ...
     }: flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = import inputs.systems;
+
       flake = (import ./overlay.nix) // {
         lake = import ./lake.nix;
         templates = import ./templates;
       };
-      systems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
-        "aarch64-darwin"
-      ];
+
       perSystem = { system, pkgs, ... }:
         let
           overlay = import ./overlay.nix;
