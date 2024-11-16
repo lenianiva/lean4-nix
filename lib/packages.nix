@@ -20,7 +20,7 @@ let
     '';
   }).overrideAttrs (old: {
     # https://github.com/NixOS/nixpkgs/issues/119779
-    installPhase = builtins.replaceStrings ["use_response_file_by_default=1"] ["use_response_file_by_default=0"] old.installPhase;
+    installPhase = builtins.replaceStrings [ "use_response_file_by_default=1" ] [ "use_response_file_by_default=0" ] old.installPhase;
   });
   stdenv' = if stdenv.isLinux then useGoldLinker stdenv else stdenv;
   lean = callPackage bootstrap (args // {
@@ -28,10 +28,12 @@ let
     inherit src buildLeanPackage llvmPackages;
   });
   makeOverridableLeanPackage = f:
-    let newF = origArgs: f origArgs // {
-      overrideArgs = newArgs: makeOverridableLeanPackage f (origArgs // newArgs);
-    };
-    in lib.setFunctionArgs newF (lib.functionArgs f) // {
+    let
+      newF = origArgs: f origArgs // {
+        overrideArgs = newArgs: makeOverridableLeanPackage f (origArgs // newArgs);
+      };
+    in
+    lib.setFunctionArgs newF (lib.functionArgs f) // {
       override = args: makeOverridableLeanPackage (f.override args);
     };
   buildLeanPackage = makeOverridableLeanPackage (callPackage (import "${src}/nix/buildLeanPackage.nix") (args // {
@@ -39,7 +41,8 @@ let
     lean = lean.stage1;
     inherit (lean.stage1) leanc;
   }));
-in {
+in
+{
   inherit cc buildLeanPackage llvmPackages;
   nixpkgs = pkgs;
   ciShell = writeShellScriptBin "ciShell" ''
