@@ -6,15 +6,16 @@ let
     };
   };
   readFromGit = { args, bootstrap }: readSrc { src = builtins.fetchGit args; inherit bootstrap; };
-  readRev = { rev, bootstrap }: readFromGit {
+  readRev = { rev, bootstrap, tag }: readFromGit {
     args = {
       url = "https://github.com/leanprover/lean4.git";
       shallow = true;
+      ref = "refs/tags/${tag}";
       inherit rev;
     };
     inherit bootstrap;
   };
-  tags = builtins.mapAttrs (tag: manifest: readRev { inherit (manifest) rev bootstrap; }) manifests;
+  tags = builtins.mapAttrs (tag: manifest: readRev { inherit (manifest) tag rev bootstrap; }) manifests;
   readToolchain = toolchain : builtins.addErrorContext "Only leanprover/lean4:{tag} toolchains are supported" (let
     matches = builtins.match "^[[:space:]]*leanprover/lean4:([a-zA-Z0-9\\-\\.]+)[[:space:]]*$" toolchain;
     tag = builtins.head matches;
