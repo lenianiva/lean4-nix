@@ -29,11 +29,13 @@
         overlays = [ (overlay.readToolchainFile ./templates/minimal/lean-toolchain) ];
       };
       checks = import ./checks.nix { inherit pkgs; };
+      packages = import ./packages.nix { inherit pkgs; };
     in {
       packages = {
         inherit (pkgs.lean) leanshared lean leanc lean-all lake;
       };
       inherit checks;
+      inherit packages;
     };
   };
 }
