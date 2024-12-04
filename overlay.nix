@@ -29,7 +29,6 @@ let
       args = {
         url = "https://github.com/leanprover/lean4.git";
         shallow = true;
-        allRefs = true;
         ref = "refs/tags/${tag}";
         inherit rev;
       };
