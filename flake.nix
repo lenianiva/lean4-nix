@@ -11,29 +11,37 @@
     nixpkgs,
     flake-parts,
     ...
-  } : flake-parts.lib.mkFlake { inherit inputs; } {
-    flake = (import ./overlay.nix) // {
-      lake = import ./lake.nix;
-      templates = import ./templates;
-    };
-    systems = [
-      "x86_64-linux"
-      "x86_64-darwin"
-      "aarch64-linux"
-      "aarch64-darwin"
-    ];
-    perSystem = { system, pkgs, ... }: let
-      overlay = import ./overlay.nix;
-      pkgs = import nixpkgs {
-        inherit system;
-        overlays = [ (overlay.readToolchainFile ./templates/minimal/lean-toolchain) ];
+  }:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      flake =
+        (import ./overlay.nix)
+        // {
+          lake = import ./lake.nix;
+          templates = import ./templates;
+        };
+      systems = [
+        "x86_64-linux"
+        "x86_64-darwin"
+        "aarch64-linux"
+        "aarch64-darwin"
+      ];
+      perSystem = {
+        system,
+        pkgs,
+        ...
+      }: let
+        overlay = import ./overlay.nix;
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [(overlay.readToolchainFile ./templates/minimal/lean-toolchain)];
+        };
+        checks = import ./checks.nix {inherit pkgs;};
+      in {
+        packages = {
+          inherit (pkgs.lean) leanshared lean leanc lean-all lake;
+        };
+        formatter = pkgs.alejandra;
+        inherit checks;
       };
-      checks = import ./checks.nix { inherit pkgs; };
-    in {
-      packages = {
-        inherit (pkgs.lean) leanshared lean leanc lean-all lake;
-      };
-      inherit checks;
     };
-  };
 }

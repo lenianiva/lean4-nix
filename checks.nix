@@ -1,17 +1,17 @@
-{ pkgs, ... }: let
-  lake = import ./lake.nix { inherit pkgs; };
+{pkgs, ...}: let
+  lake = import ./lake.nix {inherit pkgs;};
   minimal-direct = pkgs.lean.buildLeanPackage {
     name = "Example";
-    roots = [ "Main" ];
+    roots = ["Main"];
     src = pkgs.lib.cleanSource ./templates/minimal;
   };
   minimal-manifest = lake.mkPackage {
     src = pkgs.lib.cleanSource ./templates/minimal;
-    roots = [ "Main" ];
+    roots = ["Main"];
   };
   dependency-manifest = lake.mkPackage {
     src = pkgs.lib.cleanSource ./templates/dependency;
-    roots = [ "Example" ];
+    roots = ["Example"];
   };
 in {
   minimal-direct = minimal-direct.executable;
