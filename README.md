@@ -108,7 +108,5 @@ Update the template `lean-toolchain` files when new Lean versions come out.
 
 All code must be formatted with `alejandra` before merging into `main`. To use it, execute
 ```sh
-nix run .#formatter.$SYSTEM -- .
+nix fmt
 ```
-replace `$SYSTEM` with the current system.
-
