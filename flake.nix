@@ -13,35 +13,37 @@
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = [
+        "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "x86_64-linux"
+      ];
+
       flake =
         (import ./overlay.nix)
         // {
           lake = import ./lake.nix;
           templates = import ./templates;
         };
-      systems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
-        "aarch64-darwin"
-      ];
+
       perSystem = {
         system,
         pkgs,
         ...
-      }: let
-        overlay = import ./overlay.nix;
-        pkgs = import nixpkgs {
+      }: {
+        _module.args.pkgs = import nixpkgs {
           inherit system;
-          overlays = [(overlay.readToolchainFile ./templates/minimal/lean-toolchain)];
+          overlays = [(self.readToolchainFile ./templates/minimal/lean-toolchain)];
         };
-        checks = import ./checks.nix {inherit pkgs;};
-      in {
+
         packages = {
           inherit (pkgs.lean) leanshared lean leanc lean-all lake;
         };
+
+        checks = import ./checks.nix {inherit pkgs;};
+
         formatter = pkgs.alejandra;
-        inherit checks;
       };
     };
 }

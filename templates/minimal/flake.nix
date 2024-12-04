@@ -8,42 +8,39 @@
   };
 
   outputs = inputs @ {
-    self,
     nixpkgs,
     flake-parts,
     lean4-nix,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
-      flake = {
-      };
       systems = [
-        "x86_64-linux"
-        "x86_64-darwin"
-        "aarch64-linux"
         "aarch64-darwin"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "x86_64-linux"
       ];
+
       perSystem = {
         system,
         pkgs,
         ...
-      }: let
-        pkgs = import nixpkgs {
+      }: {
+        _module.args.pkgs = import nixpkgs {
           inherit system;
           overlays = [(lean4-nix.readToolchainFile ./lean-toolchain)];
         };
-        project = pkgs.lean.buildLeanPackage {
-          name = "Example";
-          roots = ["Main"];
-          src = pkgs.lib.cleanSource ./.;
-        };
-      in rec {
-        packages = {
-          inherit (project) executable;
-          default = project.executable;
-        };
+
+        packages.default =
+          (pkgs.lean.buildLeanPackage {
+            name = "Example";
+            roots = ["Main"];
+            src = pkgs.lib.cleanSource ./.;
+          })
+          .executable;
+
         devShells.default = pkgs.mkShell {
-          buildInputs = [pkgs.lean.lean-all pkgs.lean.lean];
+          packages = with pkgs.lean; [lean lean-all];
         };
       };
     };
