@@ -7,7 +7,7 @@
   importLakeManifest = manifestFile: let
     manifest = pkgs.lib.importJSON manifestFile;
   in
-    pkgs.lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + manifest.version) manifest;
+    pkgs.lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
   depToPackage = dep: let
     src = pkgs.lib.cleanSource (builtins.fetchGit {
       inherit (dep) url rev;
