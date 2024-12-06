@@ -40,6 +40,9 @@
         then [(capitalize manifest.name)]
         else roots;
       deps = deps ++ manifestDeps;
+
+      # Fixes some symbol not found errors
+      groupStaticLibs = true;
     };
 in {
   inherit mkPackage;
