@@ -53,12 +53,20 @@
     manifests;
 
   readToolchain = toolchain:
-    builtins.addErrorContext "Only leanprover/lean4:{tag} toolchains are supported" (let
-      matches = builtins.match "^[[:space:]]*leanprover/lean4:([a-zA-Z0-9\\-\\.]+)[[:space:]]*$" toolchain;
-      tag = builtins.head matches;
+    lib.addErrorContext "Only leanprover/lean4:{tag}[-bin] toolchains are supported" (let
+      matches = lib.match "^[[:space:]]*leanprover/lean4:([a-zA-Z0-9\\-\\.]+)(-bin)?[[:space:]]*$" toolchain;
+      tag = lib.head matches;
+      bin = lib.length matches > 1 && lib.elemAt matches 1 == "-bin";
     in
-      builtins.getAttr tag tags);
-  readToolchainFile = toolchainFile: readToolchain (builtins.readFile toolchainFile);
+      lib.getAttr
+      (
+        if bin
+        then "${tag}-bin"
+        else tag
+      )
+      tags);
+
+  readToolchainFile = toolchainFile: readToolchain (lib.readFile toolchainFile);
 in {
   inherit readSrc readFromGit readRev tags readToolchain readToolchainFile;
 }
