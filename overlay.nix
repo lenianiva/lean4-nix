@@ -1,5 +1,14 @@
-let
-  manifests = import ./manifests;
+{lib}: let
+  manifests = let
+    dir = ./manifests;
+  in
+    lib.listToAttrs (map
+      (fn: {
+        name = lib.removeSuffix ".nix" fn;
+        value = import (dir + "/${fn}");
+      })
+      (lib.attrNames (lib.readDir dir)));
+
   readSrc = {
     src,
     bootstrap,
@@ -17,7 +26,7 @@ let
     bootstrap,
   }:
     readSrc {
-      src = builtins.fetchGit args;
+      src = lib.fetchGit args;
       inherit bootstrap;
     };
   readRev = {
@@ -34,7 +43,15 @@ let
       };
       inherit bootstrap;
     };
-  tags = builtins.mapAttrs (tag: manifest: readRev {inherit (manifest) tag rev bootstrap;}) manifests;
+  tags =
+    lib.mapAttrs (
+      tag: manifest:
+        if lib.match ".*-bin$" tag != null
+        then final: prev: prev // {lean = prev.callPackage manifest.bootstrap {};}
+        else readRev {inherit (manifest) tag rev bootstrap;}
+    )
+    manifests;
+
   readToolchain = toolchain:
     builtins.addErrorContext "Only leanprover/lean4:{tag} toolchains are supported" (let
       matches = builtins.match "^[[:space:]]*leanprover/lean4:([a-zA-Z0-9\\-\\.]+)[[:space:]]*$" toolchain;

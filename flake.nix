@@ -21,7 +21,7 @@
       ];
 
       flake =
-        (import ./overlay.nix)
+        (import ./overlay.nix {lib = builtins // nixpkgs.lib;})
         // {
           lake = import ./lake.nix;
           templates = import ./templates;
