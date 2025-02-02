@@ -33,9 +33,10 @@ version is `v4.11.0`, since it is the version when Lean's official Nix flake was
 deprecated. There are a couple of ways to get an overlay. Each corresponds to a
 flake output:
 
-- `readSrc`: Builds Lean from a source folder.
-- `readFromGit`: Given parameters to `builtins.fetchGit`, download a git repository
-- `readRev`: Reads a revision from the official Lean 4 repository
+- `readSrc { src; bootstrap; }`: Builds Lean from a source folder. A
+  bootstrapping function must be provided.
+- `readFromGit{ args; bootstrap; }`: Given parameters to `builtins.fetchGit`, download a git repository
+- `readRev { rev; bootstrap; } `: Reads a revision from the official Lean 4 repository
 - `readToolchainFile`: Reads the toolchain from a file. Due to Nix's pure
   evaluation principle, this only supports `leanprover/lean4:{tag}` based
   `lean-toolchain` files. For any other toolchains, use `readRev` or `readFromGit`.
@@ -104,3 +105,8 @@ The Lean version is not listed in the `manifests/` directory. Use `readRev` or
 Use `nix flake check` to check the template builds.
 
 Update the template `lean-toolchain` files when new Lean versions come out.
+
+All code must be formatted with `alejandra` before merging into `main`. To use it, execute
+```sh
+nix fmt
+```

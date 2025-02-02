@@ -1,7 +1,6 @@
 {
-  tag = "v4.12.0";
-  rev = "dc2533473114eb8656439ff2b9335209784aa640";
-
+  tag = "v4.13.0";
+  rev = "6d22e0e5cc5a4392466e3d6dd8522486d1fd038b";
   bootstrap = {
     src,
     debug ? false,
@@ -157,12 +156,18 @@
           Lean = attachSharedLib leanshared Lean' // {allExternalDeps = [Std];};
           Lake = build {
             name = "Lake";
+            sharedLibName = "Lake_shared";
             src = src + "/src/lake";
             deps = [Init Lean];
           };
           Lake-Main = build {
-            name = "Lake.Main";
-            roots = ["Lake.Main"];
+            name = "LakeMain";
+            roots = [
+              {
+                glob = "one";
+                mod = "LakeMain";
+              }
+            ];
             executableName = "lake";
             deps = [Lake];
             linkFlags = lib.optional stdenv.isLinux "-rdynamic";
@@ -187,7 +192,7 @@
             deps = stdlib;
             roots = ["Leanc"];
           };
-          stdlibLinkFlags = "${lib.concatMapStringsSep " " (l: "-L${l.staticLib}") stdlib} -L${leancpp}/lib/lean -L${leancpp}/lib/temp";
+          stdlibLinkFlags = "${lib.concatMapStringsSep " " (l: "-L${l.staticLib}") stdlib} -L${leancpp}/lib/lean";
           libInit_shared =
             runCommand "libInit_shared" {
               buildInputs = [stdenv.cc];
@@ -225,7 +230,7 @@
           mods = foldl' (mods: pkg: mods // pkg.mods) {} stdlib;
           print-paths = Lean.makePrintPathsFor [] mods;
           leanc = writeShellScriptBin "leanc" ''
-            LEAN_CC=${stdenv.cc}/bin/cc ${Leanc.executable}/bin/leanc -I${lean-bin-tools-unwrapped}/include ${stdlibLinkFlags} -L${libInit_shared} -L${leanshared_1} -L${leanshared} "$@"
+            LEAN_CC=${stdenv.cc}/bin/cc ${Leanc.executable}/bin/leanc -I${lean-bin-tools-unwrapped}/include ${stdlibLinkFlags} -L${libInit_shared} -L${leanshared_1} -L${leanshared} -L${Lake.sharedLib} "$@"
           '';
           lean = runCommand "lean" {buildInputs = lib.optional stdenv.isDarwin darwin.cctools;} ''
             mkdir -p $out/bin
@@ -240,7 +245,7 @@
             name = "lean-${desc}";
             buildCommand = ''
               mkdir -p $out/bin $out/lib/lean
-              ln -sf ${leancpp}/lib/lean/* ${lib.concatMapStringsSep " " (l: "${l.modRoot}/* ${l.staticLib}/*") (lib.reverseList stdlib)} ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* $out/lib/lean/
+              ln -sf ${leancpp}/lib/lean/* ${lib.concatMapStringsSep " " (l: "${l.modRoot}/* ${l.staticLib}/*") (lib.reverseList stdlib)} ${libInit_shared}/* ${leanshared_1}/* ${leanshared}/* ${Lake.sharedLib}/* $out/lib/lean/
               # put everything in a single final derivation so `IO.appDir` references work
               cp ${lean}/bin/lean ${leanc}/bin/leanc ${Lake-Main.executable}/bin/lake $out/bin
               # NOTE: `lndir` will not override existing `bin/leanc`
@@ -283,7 +288,7 @@
           update-stage0 = let
             cTree = symlinkJoin {
               name = "cs";
-              paths = map (lib: lib.cTree) stdlib;
+              paths = map (lib: lib.cTree) (stdlib ++ [Lake-Main]);
             };
           in
             writeShellScriptBin "update-stage0" ''
