@@ -82,6 +82,15 @@ Use `lake2nix = lean4-nix.lake { inherit pkgs; }` to generate the lake utilities
   name from `manifestFile`
 - `deps`: Additional dependencies. Defaults to `[ Init Std Lean ]`.
 
+### `buildLeanPackage`
+
+The `buildLeanPackage` and `mkPackage` functions output the built Lean package
+in a non-derivation format. Generally, the attributes available are:
+- `executable`: Executable
+- `sharedLib`: Shared library
+- `modRoot`: Module root. Set `LEAN_PATH` to this to provide context for LSP.
+- `cTree`, `oTree`, `iTree`: Trees of C files/`.o` files/`.ilean` files
+
 ## Troubleshooting
 
 ### attribute '"{Lean,Init}.*"' is missing
