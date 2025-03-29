@@ -1,5 +1,7 @@
 # Lean 4 Nix
 
+[![built with garnix](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fgarnix.io%2Fapi%2Fbadges%2Flenianiva%2Flean4-nix)](https://garnix.io/repo/lenianiva/lean4-nix)
+
 Nix flake build for Lean 4.
 
 Features:
@@ -23,6 +25,10 @@ fetch dependencies automatically.
 ``` sh
 nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 ```
+
+## Caching
+
+This project has CI by Garnix and uses `cache.garnix.io`.
 
 ## Flake outputs
 
