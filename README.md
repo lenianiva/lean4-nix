@@ -28,7 +28,7 @@ nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 
 ## Caching
 
-This project has CI by Garnix and uses `cache.garnix.io`.
+This project has CI by Garnix and uses [`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
 
 ## Flake outputs
 
