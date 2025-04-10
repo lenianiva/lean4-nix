@@ -27,6 +27,8 @@
     roots ? null,
     # Default dependencies
     deps ? with pkgs.lean; [Init Std Lean],
+    # Static library dependencies
+    staticLibDeps ? [],
   }: let
     manifest = importLakeManifest manifestFile;
     # Build all dependencies using `buildLeanPackage`
@@ -34,13 +36,12 @@
   in
     pkgs.lean.buildLeanPackage {
       inherit (manifest) name;
-      inherit src;
+      inherit src staticLibDeps;
       roots =
         if builtins.isNull roots
         then [(capitalize manifest.name)]
         else roots;
       deps = deps ++ manifestDeps;
-
       # Fixes some symbol not found errors
       groupStaticLibs = true;
     };
