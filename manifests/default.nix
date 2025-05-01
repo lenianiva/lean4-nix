@@ -7,4 +7,5 @@
   "v4.16.0" = import ./v4.16.0.nix;
   "v4.17.0" = import ./v4.17.0.nix;
   "v4.18.0" = import ./v4.18.0.nix;
+  "v4.19.0" = import ./v4.19.0.nix;
 }
