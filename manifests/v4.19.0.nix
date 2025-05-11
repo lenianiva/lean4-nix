@@ -46,7 +46,7 @@
           // args
           // {
             src = args.realSrc or (sourceByRegex args.src ["[a-z].*" "CMakeLists\.txt"]);
-            cmakeFlags = ["-DSMALL_ALLOCATOR=ON" "-DUSE_MIMALLOC=OFF"] ++ (args.cmakeFlags or [ "-DSTAGE=1" "-DPREV_STAGE=./faux-prev-stage" "-DUSE_GITHASH=OFF" "-DCADICAL=${cadical}/bin/cadical" ]) ++ (args.extraCMakeFlags or extraCMakeFlags) ++ lib.optional (args.debug or debug) [ "-DCMAKE_BUILD_TYPE=Debug" ];
+            cmakeFlags = ["-DSMALL_ALLOCATOR=ON" "-DUSE_MIMALLOC=ON"] ++ (args.cmakeFlags or [ "-DSTAGE=1" "-DPREV_STAGE=./faux-prev-stage" "-DUSE_GITHASH=OFF" "-DCADICAL=${cadical}/bin/cadical" ]) ++ (args.extraCMakeFlags or extraCMakeFlags) ++ lib.optional (args.debug or debug) [ "-DCMAKE_BUILD_TYPE=Debug" ];
             preConfigure =
               args.preConfigure
               or ""
