@@ -26,6 +26,7 @@
     darwin,
     llvmPackages,
     linkFarmFromDrvs,
+    pkgs,
     ...
   } @ args:
     with builtins; rec {
@@ -44,7 +45,7 @@
             hardeningDisable = ["all"];
             dontStrip = args.debug or debug;
 
-            patches = [
+            patches = [( pkgs.writeText "mimalloc.patch"
 ''
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
@@ -62,7 +63,7 @@
    list(APPEND EXTRA_DEPENDS mimalloc)
  endif()
 ''
-            ];
+            )];
             postPatch = let pattern = "\${LEAN_BINARY_DIR}/../mimalloc/src/mimalloc"; in
               ''
               substituteInPlace CMakeLists.txt \
