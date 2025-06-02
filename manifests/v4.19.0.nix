@@ -27,7 +27,7 @@
     linkFarmFromDrvs,
     pkgs,
     ...
-  } @ args:
+  } @ args0:
     with builtins; rec {
       mimalloc-src = builtins.fetchGit {
         url = "https://github.com/microsoft/mimalloc.git";
@@ -56,7 +56,7 @@
       inherit stdenv;
       src = stdenv.mkDerivation {
         name = "lean-src";
-        inherit (args) src;
+        inherit (args0) src;
 
         patches = [mimalloc-patch];
         postPatch = let
@@ -76,6 +76,7 @@
           cp -r * $out/
         '';
       };
+      args = args0 // { inherit src; };
       sourceByRegex = p: rs: lib.sourceByRegex p (map (r: "(/src/)?${r}") rs);
       buildCMake = args:
         stdenv.mkDerivation ({
@@ -91,7 +92,7 @@
           }
           // args
           // {
-            src = args.realSrc or (sourceByRegex src ["[a-z].*" "CMakeLists\.txt"]);
+            src = args.realSrc or (sourceByRegex args.src ["[a-z].*" "CMakeLists\.txt"]);
             cmakeFlags = ["-DSMALL_ALLOCATOR=ON" "-DUSE_MIMALLOC=ON"] ++ (args.cmakeFlags or ["-DSTAGE=1" "-DPREV_STAGE=./faux-prev-stage" "-DUSE_GITHASH=OFF" "-DCADICAL=${cadical}/bin/cadical"]) ++ (args.extraCMakeFlags or extraCMakeFlags) ++ lib.optional (args.debug or debug) ["-DCMAKE_BUILD_TYPE=Debug"];
             preConfigure =
               args.preConfigure
