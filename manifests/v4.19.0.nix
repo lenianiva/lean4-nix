@@ -62,6 +62,9 @@
         postPatch = let
           pattern = "\${LEAN_BINARY_DIR}/../mimalloc/src/mimalloc";
         in ''
+          # Remove tests that fails in sandbox.
+          # It expects `sourceRoot` to be a git repository.
+          rm -rf src/lake/examples/git/
           substituteInPlace CMakeLists.txt \
             --replace-fail 'MIMALLOC-SRC' '${mimalloc-src}'
           for file in src/CMakeLists.txt src/runtime/CMakeLists.txt; do
