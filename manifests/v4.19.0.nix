@@ -49,7 +49,7 @@
 ''
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -77,12 +77,8 @@
+@@ -68,11 +68,7 @@
  if (USE_MIMALLOC)
    ExternalProject_add(mimalloc
      PREFIX mimalloc
