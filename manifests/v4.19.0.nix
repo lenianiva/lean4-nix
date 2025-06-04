@@ -48,7 +48,7 @@
           -    # just download, we compile it as part of each stage as it is small
           -    CONFIGURE_COMMAND ""
           -    BUILD_COMMAND ""
-          +    SOURCE_DIR "MIMALLOC-SRC"
+          +    SOURCE_DIR "${mimalloc-src}"
                INSTALL_COMMAND "")
              list(APPEND EXTRA_DEPENDS mimalloc)
            endif()
@@ -65,8 +65,6 @@
           # Remove tests that fails in sandbox.
           # It expects `sourceRoot` to be a git repository.
           rm -rf src/lake/examples/git/
-          substituteInPlace CMakeLists.txt \
-            --replace-fail 'MIMALLOC-SRC' '${mimalloc-src}'
           for file in src/CMakeLists.txt src/runtime/CMakeLists.txt; do
             substituteInPlace "$file" \
               --replace-fail '${pattern}' '${mimalloc-src}'
