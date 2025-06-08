@@ -58,7 +58,7 @@
         name = "lean-src";
         inherit (args0) src;
 
-        builtInputs = [mimalloc-src];
+        nativeBuildInputs = [mimalloc-src];
         patches = [mimalloc-patch];
         postPatch = let
           pattern = "\${LEAN_BINARY_DIR}/../mimalloc/src/mimalloc";
