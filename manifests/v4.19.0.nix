@@ -58,7 +58,6 @@
         name = "lean-src";
         inherit (args0) src;
 
-        nativeBuildInputs = [mimalloc-src];
         patches = [mimalloc-patch];
         postPatch = let
           pattern = "\${LEAN_BINARY_DIR}/../mimalloc/src/mimalloc";
@@ -75,6 +74,7 @@
         dontConfigure = true;
         installPhase = ''
           mkdir -p $out
+          cp -r ${mimalloc-src} $out/mimalloc
           cp -r * $out/
         '';
       };
