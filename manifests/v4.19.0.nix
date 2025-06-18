@@ -28,48 +28,49 @@
     pkgs,
     ...
   } @ args0:
+    let 
+      mimalloc-src = pkgs.fetchFromGitHub {
+        owner = "microsoft";
+        repo = "mimalloc";
+        rev = "v2.2.3";
+        sha256 = "sha256-B0gngv16WFLBtrtG5NqA2m5e95bYVcQraeITcOX9A74=";
+      };
+      mimalloc-patch =
+        pkgs.writeText "mimalloc.patch"
+        ''
+          --- a/CMakeLists.txt
+          +++ b/CMakeLists.txt
+          @@ -68,11 +68,7 @@
+           if (USE_MIMALLOC)
+             ExternalProject_add(mimalloc
+               PREFIX mimalloc
+          -    GIT_REPOSITORY https://github.com/microsoft/mimalloc
+          -    GIT_TAG v2.2.3
+          -    # just download, we compile it as part of each stage as it is small
+          -    CONFIGURE_COMMAND ""
+          -    BUILD_COMMAND ""
+          +    SOURCE_DIR "${mimalloc-src}"
+               INSTALL_COMMAND "")
+             list(APPEND EXTRA_DEPENDS mimalloc)
+           endif()
+        '';
+    in
     with builtins; rec {
       inherit stdenv;
-      src = stdenv.mkDerivation (finalAttrs: {
+      src = stdenv.mkDerivation {
         name = "lean-src";
         inherit (args0) src;
 
-        mimalloc-src = builtins.fetchGit {
-          url = "https://github.com/microsoft/mimalloc.git";
-          rev = "94036de6fe20bfd8a73d4a6d142fcf532ea604d9";
-          ref = "v2.2.3";
-        };
-        mimalloc-patch =
-          pkgs.writeText "mimalloc.patch"
-          ''
-            --- a/CMakeLists.txt
-            +++ b/CMakeLists.txt
-            @@ -68,11 +68,7 @@
-             if (USE_MIMALLOC)
-               ExternalProject_add(mimalloc
-                 PREFIX mimalloc
-            -    GIT_REPOSITORY https://github.com/microsoft/mimalloc
-            -    GIT_TAG v2.2.3
-            -    # just download, we compile it as part of each stage as it is small
-            -    CONFIGURE_COMMAND ""
-            -    BUILD_COMMAND ""
-            +    SOURCE_DIR "MIMALLOC-SRC"
-                 INSTALL_COMMAND "")
-               list(APPEND EXTRA_DEPENDS mimalloc)
-             endif()
-          '';
-        patches = [finalAttrs.mimalloc-patch];
+        patches = [mimalloc-patch];
         postPatch = let
           pattern = "\${LEAN_BINARY_DIR}/../mimalloc/src/mimalloc";
         in ''
           # Remove tests that fails in sandbox.
           # It expects `sourceRoot` to be a git repository.
           rm -rf src/lake/examples/git/
-          substituteInPlace CMakeLists.txt \
-            --replace-fail 'MIMALLOC-SRC' '${finalAttrs.mimalloc-src}'
           for file in src/CMakeLists.txt src/runtime/CMakeLists.txt; do
             substituteInPlace "$file" \
-              --replace-fail '${pattern}' '${finalAttrs.mimalloc-src}'
+              --replace-fail '${pattern}' '${mimalloc-src}'
           done
         '';
         dontBuild = true;
@@ -78,12 +79,12 @@
           mkdir -p $out
           cp -r * $out/
         '';
-      });
+      };
       args = args0 // {inherit src;};
       sourceByRegex = p: rs: lib.sourceByRegex p (map (r: "(/src/)?${r}") rs);
       buildCMake = args:
         stdenv.mkDerivation ({
-            nativeBuildInputs = [cmake];
+            nativeBuildInputs = [ cmake mimalloc-src ];
             buildInputs = [gmp libuv llvmPackages.llvm pkg-config];
             # https://github.com/NixOS/nixpkgs/issues/60919
             hardeningDisable = ["all"];
