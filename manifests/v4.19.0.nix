@@ -68,9 +68,9 @@
           # Remove tests that fails in sandbox.
           # It expects `sourceRoot` to be a git repository.
           rm -rf src/lake/examples/git/
-          for file in src/CMakeLists.txt src/runtime/CMakeLists.txt; do
+          for file in src/CMakeLists.txt src/runtime/CMakeLists.txt stage0/src/CMakeLists.txt stage0/src/runtime/CMakeLists.txt; do
             substituteInPlace "$file" \
-              --replace-fail '${pattern}' '${mimalloc-src}'
+              --replace-quiet '${pattern}' '${mimalloc-src}'
           done
         '';
         dontBuild = true;
