@@ -43,7 +43,7 @@
           .executable;
 
         devShells.default = pkgs.mkShell {
-          packages = with pkgs.lean; [lean lean-all];
+          packages = with pkgs.lean; [lean-all];
         };
       };
     };
