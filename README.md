@@ -57,6 +57,12 @@ pkgs = import nixpkgs {
 ```
 and `pkgs.lean` will be replaced by the chosen overlay.
 
+Some users may wish to build nightly or release candidate versions without a
+corresponding manifest in `manifests/`. In this case, a common solution is to
+import the `bootstrap` function from the nearest major version and feed it to
+`readRev`. In cases where there is a major change to the `bootstrap` function,
+the user may need to create the function on their own.
+
 ### `pkgs.lean`
 
 This attribute set has properties
