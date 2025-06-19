@@ -27,34 +27,33 @@
     linkFarmFromDrvs,
     pkgs,
     ...
-  } @ args0:
-    let 
-      mimalloc-src = pkgs.fetchFromGitHub {
-        owner = "microsoft";
-        repo = "mimalloc";
-        rev = "v2.2.3";
-        sha256 = "sha256-B0gngv16WFLBtrtG5NqA2m5e95bYVcQraeITcOX9A74=";
-      };
-      mimalloc-patch =
-        pkgs.writeText "mimalloc.patch"
-        ''
-          --- a/CMakeLists.txt
-          +++ b/CMakeLists.txt
-          @@ -68,11 +68,7 @@
-           if (USE_MIMALLOC)
-             ExternalProject_add(mimalloc
-               PREFIX mimalloc
-          -    GIT_REPOSITORY https://github.com/microsoft/mimalloc
-          -    GIT_TAG v2.2.3
-          -    # just download, we compile it as part of each stage as it is small
-          -    CONFIGURE_COMMAND ""
-          -    BUILD_COMMAND ""
-          +    SOURCE_DIR "${mimalloc-src}"
-               INSTALL_COMMAND "")
-             list(APPEND EXTRA_DEPENDS mimalloc)
-           endif()
-        '';
-    in
+  } @ args0: let
+    mimalloc-src = pkgs.fetchFromGitHub {
+      owner = "microsoft";
+      repo = "mimalloc";
+      rev = "v2.2.3";
+      sha256 = "sha256-B0gngv16WFLBtrtG5NqA2m5e95bYVcQraeITcOX9A74=";
+    };
+    mimalloc-patch =
+      pkgs.writeText "mimalloc.patch"
+      ''
+        --- a/CMakeLists.txt
+        +++ b/CMakeLists.txt
+        @@ -68,11 +68,7 @@
+         if (USE_MIMALLOC)
+           ExternalProject_add(mimalloc
+             PREFIX mimalloc
+        -    GIT_REPOSITORY https://github.com/microsoft/mimalloc
+        -    GIT_TAG v2.2.3
+        -    # just download, we compile it as part of each stage as it is small
+        -    CONFIGURE_COMMAND ""
+        -    BUILD_COMMAND ""
+        +    SOURCE_DIR "${mimalloc-src}"
+             INSTALL_COMMAND "")
+           list(APPEND EXTRA_DEPENDS mimalloc)
+         endif()
+      '';
+  in
     with builtins; rec {
       inherit stdenv;
       src = stdenv.mkDerivation {
@@ -84,7 +83,7 @@
       sourceByRegex = p: rs: lib.sourceByRegex p (map (r: "(/src/)?${r}") rs);
       buildCMake = args:
         stdenv.mkDerivation ({
-            nativeBuildInputs = [ cmake mimalloc-src ];
+            nativeBuildInputs = [cmake mimalloc-src];
             buildInputs = [gmp libuv llvmPackages.llvm pkg-config];
             # https://github.com/NixOS/nixpkgs/issues/60919
             hardeningDisable = ["all"];
