@@ -28,9 +28,20 @@ nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 
 ## Caching
 
-This project has CI by Garnix and uses [`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
+This project has CI by Garnix and uses
+[`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
 
 ## Flake outputs
+
+### Packages
+
+The flake's `packages` output contains the Lean and lake executables. The
+version corresponds to the latest version in the `manifests/` directory.
+
+- `lean-all`: `lean` and `lake`
+- `lean`/`leanc`/`lake`: Executables
+- `leanshared`: Shared library of Lean
+- `cacheRoots`: Cached derivations to enable binary caching.
 
 ### Overlay
 
@@ -85,14 +96,15 @@ This is a form of manual dependency management.
 
 Use `lake2nix = lean4-nix.lake { inherit pkgs; }` to generate the lake utilities.
 
-`lake2nix.mkPackage { src; roots; }` automatically reads the
-`lake-manifest.json` file and builds dependencies.
+`lake2nix.mkPackage { ... }` automatically reads the `lake-manifest.json` file
+and builds dependencies. It takes the following arguments:
 
 - `src`: The source directory
-- `manifestFile`: Path to the manifest file. Defaults to `${src}/lake-manifest.json`
+- `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file.
 - `roots`: Lean modules at the root of the import tree. Defaults to the project
   name from `manifestFile`
-- `deps`: Additional dependencies. Defaults to `[ Init Std Lean ]`.
+- `deps ? [ Init Std Lean ]`: Additional Lean package dependencies.
+- `staticLibDeps ? []`: List of static libraries to link with.
 
 ### `buildLeanPackage`
 
