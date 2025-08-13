@@ -28,9 +28,20 @@ nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 
 ## Caching
 
-This project has CI by Garnix and uses [`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
+This project has CI by Garnix and uses
+[`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
 
 ## Flake outputs
+
+### Packages
+
+The flake's `packages` output contains the Lean and lake executables. The
+version corresponds to the latest version in the `manifests/` directory.
+
+- `lean-all`: `lean` and `lake`
+- `lean`/`leanc`/`lake`: Executables
+- `leanshared`: Shared library of Lean
+- `cacheRoots`: Cached derivations to enable binary caching.
 
 ### Overlay
 
