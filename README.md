@@ -6,6 +6,7 @@ Nix flake build for Lean 4.
 
 Features:
 
+- Build Lean with Nix
 - Lean overlay
 - Automatically read toolchain version
 - Convert `lake-manifest.json` into Lean build
@@ -47,13 +48,16 @@ version corresponds to the latest version in the `manifests/` directory.
 
 The user must decide on a Lean version to use as overlay. The minimal supported
 version is `v4.11.0`, since it is the version when Lean's official Nix flake was
-deprecated. There are a couple of ways to get an overlay. Each corresponds to a
-flake output:
+deprecated. From version `v4.22.0` onwards, the each Lean build must have both
+`bootstrap` and `buildLeanPackage` functions.  There are a couple of ways to get
+an overlay. Each corresponds to a flake output:
 
-- `readSrc { src; bootstrap; }`: Builds Lean from a source folder. A
+- `readSrc { src; bootstrap; buildLeanPackage; }`: Builds Lean from a source folder. A
   bootstrapping function must be provided.
-- `readFromGit{ args; bootstrap; }`: Given parameters to `builtins.fetchGit`, download a git repository
-- `readRev { rev; bootstrap; } `: Reads a revision from the official Lean 4 repository
+- `readFromGit{ args; bootstrap; buildLeanPackage; }`: Given parameters to
+  `builtins.fetchGit`, download a git repository
+- `readRev { rev; bootstrap; buildLeanPackage; } `: Reads a revision from the
+  official Lean 4 repository
 - `readToolchainFile`: Reads the toolchain from a file. Due to Nix's pure
   evaluation principle, this only supports `leanprover/lean4:{tag}` based
   `lean-toolchain` files. For any other toolchains, use `readRev` or `readFromGit`.
@@ -70,10 +74,10 @@ and `pkgs.lean` will be replaced by the chosen overlay.
 
 Some users may wish to build nightly or release candidate versions without a
 corresponding manifest in `manifests/`. In this case, a common solution is to
-import the `bootstrap` function from the nearest major version and feed it to
-`readRev`. In cases where there is a major change to the `bootstrap` function,
-the user may need to create the function on their own. For some versions, the
-user may also need to provide a `buildLeanPackage` function.
+import the `bootstrap` and `buildLeanPackage` functions from the nearest major
+version and feed it to `readRev`. In cases where there is a major change to the
+`bootstrap`/`buildLeanPackage` function, the user may need to create the
+function on their own.
 
 ### `pkgs.lean`
 
@@ -82,11 +86,12 @@ This attribute set has properties
 - `lean`: The Lean executable
 - `lean-all`: `lean`, `lake`, and the Lean library.
 - `example`: Use `nix run .#example` to see an example of building a Lean program.
-- `Init`, `Std`, `Lean`: Lean built-in libraries provided in the same format as `buildLeanPackage`
+- `Init`, `Std`, `Lean`: Lean built-in libraries provided in the same format as
+  `buildLeanPackage`
 
 and the function `buildLeanPackage`, which accepts a parameter set
-`{ name; roots; deps; src; }`. The complete parameter set can be found in Lean
-4's `nix/buildLeanPackage.nix` file. In general:
+`{ name; roots; deps; src; }`. The complete parameter set can be found in [the
+v4.22.0 manifest](manifests/v4.22.0.nix). In general:
 - `src`: The source directory
 - `roots`: Lean modules at the root of the import tree.
 - `deps`: A list of outputs of other `buildLeanPackage` calls.
@@ -140,7 +145,9 @@ Use `nix flake check` to check the template builds.
 
 Update the template `lean-toolchain` files when new Lean versions come out.
 
-All code must be formatted with `alejandra` before merging into `main`. To use it, execute
+All code must be formatted with `alejandra` before merging into `main`. To use
+it, execute
+
 ```sh
 nix fmt
 ```
