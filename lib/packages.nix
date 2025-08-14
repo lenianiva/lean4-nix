@@ -28,6 +28,7 @@ args @ {
   buildLeanPackageOverride = makeOverridableLeanPackage (
     callPackage (
       if builtins.isNull buildLeanPackage
+      # Only exists for versions 4.21 and below.
       then import "${src}/nix/buildLeanPackage.nix"
       else buildLeanPackage
     )

@@ -21,9 +21,9 @@
       ];
 
       flake =
-        (import ./overlay.nix)
+        (import ./lib/overlay.nix)
         // {
-          lake = import ./lake.nix;
+          lake = import ./lib/lake.nix;
           templates = import ./templates;
         };
 

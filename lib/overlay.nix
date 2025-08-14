@@ -1,5 +1,5 @@
 let
-  manifests = import ./manifests;
+  manifests = import ../manifests;
   readSrc = {
     src,
     bootstrap,
@@ -8,7 +8,7 @@ let
     prev
     // rec {
       lean =
-        (prev.callPackage ./lib/packages.nix {inherit src bootstrap buildLeanPackage;})
+        (prev.callPackage ./packages.nix {inherit src bootstrap buildLeanPackage;})
         // {
           lake = lean.Lake-Main.executable;
         };
