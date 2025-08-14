@@ -7,6 +7,7 @@ Nix flake build for Lean 4.
 Features:
 
 - Build Lean with Nix
+- Build Lean Projects (with executables and libraries) with Nix
 - Lean overlay
 - Automatically read toolchain version
 - Convert `lake-manifest.json` into Lean build
