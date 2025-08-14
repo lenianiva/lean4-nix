@@ -3,12 +3,14 @@ args @ {
   callPackage,
   lib,
   llvmPackages,
+  buildLeanPackage ? null,
   src,
 }: let
   lean = callPackage bootstrap (args
     // {
       inherit (llvmPackages) stdenv;
-      inherit src buildLeanPackage llvmPackages;
+      inherit src llvmPackages;
+      buildLeanPackage = buildLeanPackageOverride;
     });
 
   makeOverridableLeanPackage = f: let
@@ -23,11 +25,18 @@ args @ {
       override = args: makeOverridableLeanPackage (f.override args);
     };
 
-  buildLeanPackage = makeOverridableLeanPackage (callPackage (import "${src}/nix/buildLeanPackage.nix") (args
+  buildLeanPackageOverride = makeOverridableLeanPackage (
+    callPackage (
+      if builtins.isNull buildLeanPackage
+      then import "${src}/nix/buildLeanPackage.nix"
+      else buildLeanPackage
+    )
+      (args
     // {
       inherit (lean) stdenv;
       lean = lean.stage1;
       inherit (lean.stage1) leanc;
-    }));
+    }
+      ));
 in
-  {inherit buildLeanPackage;} // lean.stage1
+  {buildLeanPackage = buildLeanPackageOverride;} // lean.stage1
