@@ -32,12 +32,14 @@ args @ {
       then import "${src}/nix/buildLeanPackage.nix"
       else buildLeanPackage
     )
-      (args
-    // {
-      inherit (lean) stdenv;
-      lean = lean.stage1;
-      inherit (lean.stage1) leanc;
-    }
-      ));
+    (
+      args
+      // {
+        inherit (lean) stdenv;
+        lean = lean.stage1;
+        inherit (lean.stage1) leanc;
+      }
+    )
+  );
 in
   {buildLeanPackage = buildLeanPackageOverride;} // lean.stage1

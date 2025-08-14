@@ -19,7 +19,7 @@
     runCommand,
     darwin,
     mkShell,
-      pkgs,
+    pkgs,
     ...
   }: let
     lean-final' = lean-final;
