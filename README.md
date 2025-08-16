@@ -37,13 +37,15 @@ This project has CI by Garnix and uses
 
 ### Packages
 
-The flake's `packages` output contains the Lean and lake executables. The
-version corresponds to the latest version in the `manifests/` directory.
+The flake's `packages.${system}.lean` output contains the Lean and lake
+executables. The version corresponds to the latest version in the `manifests/`
+directory.
 
 - `lean-all`: `lean` and `lake`
 - `lean`/`leanc`/`lake`: Executables
 - `leanshared`: Shared library of Lean
 - `cacheRoots`: Cached derivations to enable binary caching.
+- `buildLeanPackage`: See below
 
 ### Overlay
 
