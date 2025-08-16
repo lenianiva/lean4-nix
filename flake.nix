@@ -38,7 +38,7 @@
         };
 
         packages = {
-          inherit (pkgs.lean) cacheRoots leanshared lean leanc lean-all lake;
+          inherit (pkgs) lean;
         };
 
         checks = import ./checks.nix {inherit pkgs;};
