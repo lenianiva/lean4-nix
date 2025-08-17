@@ -1,5 +1,5 @@
 {pkgs, ...}: let
-  lake = import ./lake.nix {inherit pkgs;};
+  lake = import ./lib/lake.nix {inherit pkgs;};
   minimal-direct = pkgs.lean.buildLeanPackage {
     name = "Example";
     roots = ["Main"];

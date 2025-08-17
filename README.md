@@ -6,6 +6,8 @@ Nix flake build for Lean 4.
 
 Features:
 
+- Build Lean with Nix
+- Build Lean Projects (with executables and libraries) with Nix
 - Lean overlay
 - Automatically read toolchain version
 - Convert `lake-manifest.json` into Lean build
@@ -28,21 +30,37 @@ nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 
 ## Caching
 
-This project has CI by Garnix and uses [`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
+This project has CI by Garnix and uses
+[`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
 
 ## Flake outputs
+
+### Packages
+
+The flake's `packages.${system}.lean` output contains the Lean and lake
+executables. The version corresponds to the latest version in the `manifests/`
+directory.
+
+- `lean-all`: `lean` and `lake`
+- `lean`/`leanc`/`lake`: Executables
+- `leanshared`: Shared library of Lean
+- `cacheRoots`: Cached derivations to enable binary caching.
+- `buildLeanPackage`: See below
 
 ### Overlay
 
 The user must decide on a Lean version to use as overlay. The minimal supported
 version is `v4.11.0`, since it is the version when Lean's official Nix flake was
-deprecated. There are a couple of ways to get an overlay. Each corresponds to a
-flake output:
+deprecated. From version `v4.22.0` onwards, the each Lean build must have both
+`bootstrap` and `buildLeanPackage` functions.  There are a couple of ways to get
+an overlay. Each corresponds to a flake output:
 
-- `readSrc { src; bootstrap; }`: Builds Lean from a source folder. A
+- `readSrc { src; bootstrap; buildLeanPackage; }`: Builds Lean from a source folder. A
   bootstrapping function must be provided.
-- `readFromGit{ args; bootstrap; }`: Given parameters to `builtins.fetchGit`, download a git repository
-- `readRev { rev; bootstrap; } `: Reads a revision from the official Lean 4 repository
+- `readFromGit{ args; bootstrap; buildLeanPackage; }`: Given parameters to
+  `builtins.fetchGit`, download a git repository
+- `readRev { rev; bootstrap; buildLeanPackage; } `: Reads a revision from the
+  official Lean 4 repository
 - `readToolchainFile`: Reads the toolchain from a file. Due to Nix's pure
   evaluation principle, this only supports `leanprover/lean4:{tag}` based
   `lean-toolchain` files. For any other toolchains, use `readRev` or `readFromGit`.
@@ -59,9 +77,10 @@ and `pkgs.lean` will be replaced by the chosen overlay.
 
 Some users may wish to build nightly or release candidate versions without a
 corresponding manifest in `manifests/`. In this case, a common solution is to
-import the `bootstrap` function from the nearest major version and feed it to
-`readRev`. In cases where there is a major change to the `bootstrap` function,
-the user may need to create the function on their own.
+import the `bootstrap` and `buildLeanPackage` functions from the nearest major
+version and feed it to `readRev`. In cases where there is a major change to the
+`bootstrap`/`buildLeanPackage` function, the user may need to create the
+function on their own.
 
 ### `pkgs.lean`
 
@@ -70,11 +89,12 @@ This attribute set has properties
 - `lean`: The Lean executable
 - `lean-all`: `lean`, `lake`, and the Lean library.
 - `example`: Use `nix run .#example` to see an example of building a Lean program.
-- `Init`, `Std`, `Lean`: Lean built-in libraries provided in the same format as `buildLeanPackage`
+- `Init`, `Std`, `Lean`: Lean built-in libraries provided in the same format as
+  `buildLeanPackage`
 
 and the function `buildLeanPackage`, which accepts a parameter set
-`{ name; roots; deps; src; }`. The complete parameter set can be found in Lean
-4's `nix/buildLeanPackage.nix` file. In general:
+`{ name; roots; deps; src; }`. The complete parameter set can be found in [the
+v4.22.0 manifest](manifests/v4.22.0.nix). In general:
 - `src`: The source directory
 - `roots`: Lean modules at the root of the import tree.
 - `deps`: A list of outputs of other `buildLeanPackage` calls.
@@ -85,14 +105,15 @@ This is a form of manual dependency management.
 
 Use `lake2nix = lean4-nix.lake { inherit pkgs; }` to generate the lake utilities.
 
-`lake2nix.mkPackage { src; roots; }` automatically reads the
-`lake-manifest.json` file and builds dependencies.
+`lake2nix.mkPackage { ... }` automatically reads the `lake-manifest.json` file
+and builds dependencies. It takes the following arguments:
 
 - `src`: The source directory
-- `manifestFile`: Path to the manifest file. Defaults to `${src}/lake-manifest.json`
+- `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file.
 - `roots`: Lean modules at the root of the import tree. Defaults to the project
   name from `manifestFile`
-- `deps`: Additional dependencies. Defaults to `[ Init Std Lean ]`.
+- `deps ? [ Init Std Lean ]`: Additional Lean package dependencies.
+- `staticLibDeps ? []`: List of static libraries to link with.
 
 ### `buildLeanPackage`
 
@@ -127,7 +148,9 @@ Use `nix flake check` to check the template builds.
 
 Update the template `lean-toolchain` files when new Lean versions come out.
 
-All code must be formatted with `alejandra` before merging into `main`. To use it, execute
+All code must be formatted with `alejandra` before merging into `main`. To use
+it, execute
+
 ```sh
 nix fmt
 ```

@@ -21,9 +21,9 @@
       ];
 
       flake =
-        (import ./overlay.nix)
+        (import ./lib/overlay.nix)
         // {
-          lake = import ./lake.nix;
+          lake = import ./lib/lake.nix;
           templates = import ./templates;
         };
 
@@ -38,7 +38,7 @@
         };
 
         packages = {
-          inherit (pkgs.lean) leanshared lean leanc lean-all lake;
+          inherit (pkgs) lean;
         };
 
         checks = import ./checks.nix {inherit pkgs;};
