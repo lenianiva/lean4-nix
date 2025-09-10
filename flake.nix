@@ -31,7 +31,14 @@
         system,
         pkgs,
         ...
-      }: {
+      }: let
+        # Pre-built binary
+        lean-bin = self.fetchBinaryLean (import ./manifests/v4.22.0.nix) pkgs;
+        lean = pkgs.callPackage ./lib/packages.nix {
+          inherit lean-bin;
+          inherit (import ./manifests/v4.22.0.nix) buildLeanPackage;
+        };
+      in {
         _module.args.pkgs = import nixpkgs {
           inherit system;
           overlays = [(self.readToolchainFile ./templates/minimal/lean-toolchain)];
@@ -39,7 +46,14 @@
 
         packages = {
           inherit (pkgs) lean;
-          lean-bin = (self.fetchBinaryLean (import ./manifests/v4.22.0.nix) pkgs).lean;
+          inherit lean-bin;
+          minimal-bin =
+            (lean.buildLeanPackage {
+              name = "Example";
+              roots = ["Main"];
+              src = pkgs.lib.cleanSource ./templates/minimal;
+            })
+            .executable;
         };
 
         checks = import ./checks.nix {inherit pkgs;};
