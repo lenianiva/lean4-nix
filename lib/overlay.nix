@@ -3,6 +3,9 @@ let
   fetchBinaryLean = manifest: {
     stdenv,
     system,
+    lib,
+    fixDarwinDylibNames,
+    autoPatchelfHook,
     ...
   }: let
     version = builtins.substring 1 (-1) manifest.tag;
@@ -21,16 +24,46 @@ let
       src = tarball;
       dontBuild = true;
       dontConfigure = true;
+      nativeBuildInputs =
+        []
+        ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
+        ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
       installPhase = ''
         mkdir -p $out/
         cp -r ./bin $out/
+        cp -r ./include $out/
         cp -r ./lib $out/
       '';
     };
+    LEAN_PATH = "${lean-all}/lib/lean";
     mkLib = name: {
       allExternalDeps = [];
       staticLibDeps = [];
+      mods = {
+        "${name}" = stdenv.mkDerivation {
+          name = "${name}-mods";
+          src = lean-all;
+          inherit LEAN_PATH;
+          dontBuild = true;
+          dontConfigure = true;
+          propagatedLoadDynlibs = [];
+          installPhase = ''
+            mkdir -p $out
+            cp -r "${lean-all}/lib/lean/${name}" $out/
+          '';
+        };
+      };
       sharedLib = "${lean-all}/lib/lean";
+      staticLib = stdenv.mkDerivation {
+        inherit name;
+        dontBuild = true;
+        dontConfigure = true;
+        src = lean-all;
+        installPhase = ''
+          mkdir -p $out
+          ln -s ${lean-all}/lib/lean/lib${name}.a $out/lib${name}.a
+        '';
+      };
     };
   in
     lean-all
@@ -38,7 +71,17 @@ let
       lean = lean-all;
       leanc = lean-all;
       lake = lean-all;
-      LEAN_PATH = "${lean-all}/lib/lean";
+      leanshared = stdenv.mkDerivation {
+        name = "leanshared";
+        dontBuild = true;
+        dontConfigure = true;
+        src = lean-all;
+        installPhase = ''
+          mkdir -p $out
+          ln -s ${lean-all}/lib/lean/libleanshared.so $out/libleanshared.so
+        '';
+      };
+      inherit LEAN_PATH;
       Init = mkLib "Init";
       Std = mkLib "Std";
       Lean = mkLib "Lean";
