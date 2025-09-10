@@ -1,6 +1,10 @@
 let
   manifests = import ../manifests;
-  fetchBinaryLean = manifest: { stdenv, system, ... }: let
+  fetchBinaryLean = manifest: {
+    stdenv,
+    system,
+    ...
+  }: let
     version = builtins.substring 1 (-1) manifest.tag;
     system-tag = builtins.getAttr system {
       x86_64-linux = "linux";
@@ -9,7 +13,7 @@ let
       aarch64-darwin = "darwin_aarch64";
     };
     tarball = fetchTarball {
-      url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system}.tar.zst";
+      url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
       sha256 = manifest.toolchain.${system}.sha256;
     };
     lean-all = stdenv.mkDerivation {
@@ -28,25 +32,17 @@ let
       staticLibDeps = [];
       sharedLib = "${lean-all}/lib/lean";
     };
-  in lean-all // {
-    lean = lean-all;
-    leanc =
-    stdenv.mkDerivation {
-      name = "leanc";
-      src = lean-all;
-      dontBuild = true;
-      dontConfigure = true;
-      installPhase = ''
-        mkdir -p $out/bin
-        cp bin/leanc $out/bin/
-      '';
+  in
+    lean-all
+    // {
+      lean = lean-all;
+      leanc = lean-all;
+      lake = lean-all;
+      LEAN_PATH = "${lean-all}/lib/lean";
+      Init = mkLib "Init";
+      Std = mkLib "Std";
+      Lean = mkLib "Lean";
     };
-    lake = lean-all;
-    LEAN_PATH = "${lean-all}/lib/lean";
-    Init = mkLib "Init";
-    Std = mkLib "Std";
-    Lean = mkLib "Lean";
-  };
   readSrc = {
     src,
     bootstrap,
