@@ -3,7 +3,8 @@ args @ {
   lib,
   llvmPackages,
   stdenv,
-  # If this is null, it uses the `buildLeanPackage.nix` in the provided `src`.
+  # If this is null, it uses the `buildLeanPackage.nix` in the provided `src`,
+  # which only exists for versions 4.21 and below.
   buildLeanPackage ? null,
   # Either provide a built Lean ...
   lean-bin ? null,
@@ -34,10 +35,7 @@ args @ {
 
   buildLeanPackageOverride = makeOverridableLeanPackage (
     callPackage (
-      if builtins.isNull buildLeanPackage
-      # Only exists for versions 4.21 and below.
-      then import "${src}/nix/buildLeanPackage.nix"
-      else buildLeanPackage
+      lib.defaultTo (import "${src}/nix/buildLeanPackage.nix") buildLeanPackage
     )
     (
       args
