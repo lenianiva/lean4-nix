@@ -1,6 +1,9 @@
 {
   tag = "v4.22.0";
   rev = "ba2cbbf09d4978f416e0ebd1fceeebc2c4138c05";
+  toolchain = {
+    linux.sha256 = "06v03nbwcb0ky8rzqg18izwshsqmbamw41nmvxahf6d6pzhym8gf";
+  };
   inherit (import ./v4.19.0.nix) bootstrap;
   buildLeanPackage = {
     lean,

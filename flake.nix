@@ -39,6 +39,7 @@
 
         packages = {
           inherit (pkgs) lean;
+          lean-bin = (self.fetchBinaryLean (import ./manifests/v4.22.0.nix) pkgs).lean;
         };
 
         checks = import ./checks.nix {inherit pkgs;};

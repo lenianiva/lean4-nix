@@ -1,5 +1,24 @@
 let
   manifests = import ../manifests;
+  fetchBinaryLean = manifest: pkgs: let
+    version = builtins.substring 1 (-1) manifest.tag;
+    tarball = fetchTarball {
+      url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-linux.tar.zst";
+      sha256 = manifest.toolchain.linux.sha256;
+    };
+  in {
+    lean = pkgs.stdenv.mkDerivation {
+      name = "lean";
+      src = tarball;
+      dontBuild = true;
+      dontConfigure = true;
+      installPhase = ''
+        mkdir -p $out/
+        cp -r ./bin $out/
+        cp -r ./lib $out/
+      '';
+    };
+  };
   readSrc = {
     src,
     bootstrap,
@@ -27,6 +46,7 @@ let
     bootstrap,
     buildLeanPackage ? null,
     tag,
+    toolchain,
   }:
     readFromGit {
       args = {
@@ -46,5 +66,5 @@ let
       builtins.getAttr tag tags);
   readToolchainFile = toolchainFile: readToolchain (builtins.readFile toolchainFile);
 in {
-  inherit readSrc readFromGit readRev tags readToolchain readToolchainFile;
+  inherit fetchBinaryLean readSrc readFromGit readRev tags readToolchain readToolchainFile;
 }
