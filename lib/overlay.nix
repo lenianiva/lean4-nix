@@ -19,15 +19,19 @@ let
       url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
       sha256 = manifest.toolchain.${system}.sha256;
     };
-    lean-all = stdenv.mkDerivation {
+    mkDerivation = args:
+      stdenv.mkDerivation (args
+        // {
+          dontBuild = true;
+          dontConfigure = true;
+          nativeBuildInputs =
+            []
+            ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
+            ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
+        });
+    lean-all = mkDerivation {
       name = "lean";
       src = tarball;
-      dontBuild = true;
-      dontConfigure = true;
-      nativeBuildInputs =
-        []
-        ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
-        ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
       installPhase = ''
         mkdir -p $out/
         cp -r ./bin $out/
@@ -40,12 +44,10 @@ let
       allExternalDeps = [];
       staticLibDeps = [];
       mods = {
-        "${name}" = stdenv.mkDerivation {
+        "${name}" = mkDerivation {
           name = "${name}-mods";
           src = lean-all;
           inherit LEAN_PATH;
-          dontBuild = true;
-          dontConfigure = true;
           propagatedLoadDynlibs = [];
           installPhase = ''
             mkdir -p $out
@@ -54,10 +56,8 @@ let
         };
       };
       sharedLib = "${lean-all}/lib/lean";
-      staticLib = stdenv.mkDerivation {
+      staticLib = mkDerivation {
         inherit name;
-        dontBuild = true;
-        dontConfigure = true;
         src = lean-all;
         installPhase = ''
           mkdir -p $out
@@ -71,10 +71,8 @@ let
       lean = lean-all;
       leanc = lean-all;
       lake = lean-all;
-      leanshared = stdenv.mkDerivation {
+      leanshared = mkDerivation {
         name = "leanshared";
-        dontBuild = true;
-        dontConfigure = true;
         src = lean-all;
         installPhase = ''
           mkdir -p $out
