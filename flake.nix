@@ -55,6 +55,9 @@
             })
             .executable;
         };
+        devShells.default = pkgs.mkShell {
+          buildInputs = [(pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
+        };
 
         checks = import ./checks.nix {inherit pkgs;};
 
