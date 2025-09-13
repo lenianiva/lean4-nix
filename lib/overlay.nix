@@ -1,8 +1,10 @@
 let
   manifests = import ../manifests;
   fetchBinaryLean = manifest: {
+    fetchurl,
     stdenv,
     system,
+    zstd,
     lib,
     fixDarwinDylibNames,
     autoPatchelfHook,
@@ -15,23 +17,24 @@ let
       x86_64-darwin = "darwin";
       aarch64-darwin = "darwin_aarch64";
     };
-    tarball = fetchTarball {
+    tarball = fetchurl {
       url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
       sha256 = manifest.toolchain.${system}.sha256;
     };
-    mkDerivation = args:
+    # just copying files around
+    mkDerivation = args @ {nativeBuildInputs, ...}:
       stdenv.mkDerivation (args
         // {
-          dontBuild = true;
-          dontConfigure = true;
+          phases = ["unpackPhase" "installPhase"];
           nativeBuildInputs =
-            []
+            nativeBuildInputs
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
     lean-all = mkDerivation {
       name = "lean";
       src = tarball;
+      nativeBuildInputs = [zstd];
       installPhase = ''
         mkdir -p $out/
         cp -r ./bin $out/

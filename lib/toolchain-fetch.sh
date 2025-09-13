@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 VERSION=$1
 
@@ -12,7 +12,12 @@ fi
 # Cut the revision by tag
 REV=$(git ls-remote -t https://github.com/leanprover/lean4 v$VERSION | cut -f1)
 
-declare -A targets=( [x86_64-linux]=linux [aarch64-darwin]=darwin_aarch64 )
+declare -A targets=(
+	[x86_64-linux]=linux
+	[aarch64-linux]=linux_aarch64
+	[x86_64-darwin]=darwin
+	[aarch64-darwin]=darwin_aarch64
+)
 
 construct_filename() {
 	printf "lean-$VERSION-$1.tar.zst"
@@ -37,9 +42,10 @@ printf "rev = \"$REV\";\ntoolchain = {\n"
 for target in "${!targets[@]}"; do
 	name=${targets[$target]}
 	filename=$(construct_filename $name)
-	hash=$(nix-prefetch-url --unpack https://github.com/leanprover/lean4/releases/download/v$VERSION/$filename)
-	#hash=$(sha256sum /tmp/$filename | cut -d ' ' -f 1)
-	printf "  $target = \"$hash\";\n"
+	prefetch=$(nix --extra-experimental-features nix-command store prefetch-file --json --hash-type sha256 https://github.com/leanprover/lean4/releases/download/v$VERSION/$filename)
+	hash=$(jq -r '.hash' <<< "$prefetch")
+	# :7 strips the sha256- prefix
+	printf "  $target.sha256 = \"${hash:7}\";\n"
 done
 
 printf "};"
