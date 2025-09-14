@@ -49,15 +49,15 @@
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
-    lean-all = mkDerivation {
+    lean-all = mkDerivation rec {
       name = "lean-bin";
       src = tarball;
       nativeBuildInputs = [zstd];
       installPhase = ''
         mkdir -p $out/
-        cp -r ./bin $out/
-        cp -r ./include $out/
-        cp -r ./lib $out/
+        mv ./bin $out/
+        mv ./include $out/
+        mv ./lib $out/
       '';
     };
     LEAN_PATH = "${lean-all}/lib/lean";
@@ -72,7 +72,7 @@
           propagatedLoadDynlibs = [];
           installPhase = ''
             mkdir -p $out
-            cp -r "${lean-all}/lib/lean/${name}" $out/
+            ln -s ${lean-all}/lib/lean/${name}/* $out/
           '';
         };
       };
