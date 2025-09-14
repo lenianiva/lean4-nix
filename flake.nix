@@ -32,34 +32,19 @@
         pkgs,
         ...
       }: let
-        # Pre-built binary
-        lean-bin = self.fetchBinaryLean (import ./manifests/v4.22.0.nix) pkgs;
-        lean = pkgs.callPackage ./lib/packages.nix {
-          inherit lean-bin;
-          inherit (import ./manifests/v4.22.0.nix) buildLeanPackage;
-        };
-      in {
-        _module.args.pkgs = import nixpkgs {
+        pkgs = import nixpkgs {
           inherit system;
           overlays = [(self.readToolchainFile ./templates/minimal/lean-toolchain)];
         };
-
-        packages = {
-          inherit (pkgs) lean;
-          inherit lean-bin;
-          minimal-bin =
-            (lean.buildLeanPackage {
-              name = "Example";
-              roots = ["Main"];
-              src = pkgs.lib.cleanSource ./templates/minimal;
-            })
-            .executable;
+        lake2nix = pkgs.callPackage self.lake {};
+      in {
+        packages = rec {
         };
         devShells.default = pkgs.mkShell {
-          buildInputs = [(pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
+          buildInputs = [pkgs.pre-commit (pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
         };
 
-        checks = import ./checks.nix {inherit pkgs;};
+        checks = import ./checks.nix {inherit pkgs lake2nix;};
 
         formatter = pkgs.alejandra;
       };
