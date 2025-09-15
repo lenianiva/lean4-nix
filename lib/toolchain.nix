@@ -37,27 +37,25 @@
     };
     tarball = fetchurl {
       url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
-      sha256 = manifest.toolchain.${system}.sha256;
+      hash = manifest.toolchain.${system}.hash;
     };
-    # just copying files around
-    mkDerivation = args @ {nativeBuildInputs, ...}:
+    # This is just for copying files
+    mkDerivation = args @ {nativeBuildInputs ? [], ...}:
       stdenv.mkDerivation (args
         // {
-          phases = ["unpackPhase" "installPhase"];
           nativeBuildInputs =
             nativeBuildInputs
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
-    lean-all = mkDerivation rec {
-      name = "lean-bin";
+    lean-all = mkDerivation {
+      inherit version;
+      name = "lean";
       src = tarball;
       nativeBuildInputs = [zstd];
       installPhase = ''
         mkdir -p $out/
-        mv ./bin $out/
-        mv ./include $out/
-        mv ./lib $out/
+        mv ./* $out/
       '';
     };
     LEAN_PATH = "${lean-all}/lib/lean";

@@ -36,6 +36,8 @@ in
     leanc-bin = pkgs.lean.leanc;
     lean = pkgs-built.lean;
     leanc = pkgs-built.lean.leanc;
+    # Tests that the executable can run.
+    lean-bin-run = pkgs.testers.testVersion {package = pkgs.lean;};
   }
   // (generate-lake-tests {
     lake = lake2nix;

@@ -44,8 +44,7 @@ for target in "${!targets[@]}"; do
 	filename=$(construct_filename $name)
 	prefetch=$(nix --extra-experimental-features nix-command store prefetch-file --json --hash-type sha256 https://github.com/leanprover/lean4/releases/download/v$VERSION/$filename)
 	hash=$(jq -r '.hash' <<< "$prefetch")
-	# :7 strips the sha256- prefix
-	printf "  $target.sha256 = \"${hash:7}\";\n"
+	printf "  $target.hash = \"$hash\";\n"
 done
 
 printf "};"
