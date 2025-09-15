@@ -299,7 +299,7 @@
               if stdenv.isDarwin
               then "${leancpp}/lib/temp/libleanshell.a"
               else ""
-            } ${libInit_shared}/* ${leanshared}/* ${leanshared_1}/* ${leanshared_2} -o $out/bin/lean
+            } ${libInit_shared}/* ${leanshared}/* ${leanshared_1}/* ${leanshared_2}/* -o $out/bin/lean
           '';
           # derivation following the directory layout of the "basic" setup, mostly useful for running tests
           lean-all = stdenv.mkDerivation {
