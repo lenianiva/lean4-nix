@@ -33,11 +33,13 @@
         ...
       }: let
         toolchain-file = ./templates/minimal/lean-toolchain;
-        pkgs = import nixpkgs {
+        # With built toolchain
+        pkgs-bin = import nixpkgs {
           inherit system;
           overlays = [(self.readToolchainFile toolchain-file)];
         };
-        pkgs-built = import nixpkgs {
+        # With binary toolchain
+        pkgs = import nixpkgs {
           inherit system;
           overlays = [
             (self.readToolchainFile {
@@ -46,17 +48,17 @@
             })
           ];
         };
-        lake2nix = pkgs.callPackage self.lake {};
+        lake2nix-bin = pkgs-bin.callPackage self.lake {};
       in {
         packages = {
-          lean-bin = pkgs.lean;
-          inherit (pkgs-built) lean;
+          lean-bin = pkgs-bin.lean;
+          inherit (pkgs) lean;
         };
         devShells.default = pkgs.mkShell {
           buildInputs = [pkgs.pre-commit (pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
         };
 
-        checks = (import ./checks.nix) {inherit pkgs lake2nix pkgs-built;};
+        checks = (import ./checks.nix) {inherit pkgs-bin lake2nix-bin pkgs;};
 
         formatter = pkgs.alejandra;
       };

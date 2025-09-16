@@ -1,9 +1,9 @@
 {
+  pkgs-bin,
+  lake2nix-bin,
   pkgs,
-  lake2nix,
-  pkgs-built,
 }: let
-  inherit (pkgs) lib;
+  inherit (pkgs-bin) lib;
   generate-lake-tests = {
     prefix ? "",
     lean,
@@ -29,22 +29,22 @@
       minimal-manifest-bin = minimal-manifest.executable;
       dependency-manifest-bin = dependency-manifest.executable;
     };
-  lake2nix-built = pkgs-built.callPackage lib/lake.nix {};
+  lake2nix = pkgs.callPackage lib/lake.nix {};
 in
   {
-    lean-bin = pkgs.lean;
-    leanc-bin = pkgs.lean.leanc;
-    lean = pkgs-built.lean;
-    leanc = pkgs-built.lean.leanc;
+    lean-bin = pkgs-bin.lean;
+    leanc-bin = pkgs-bin.lean.leanc;
+    lean = pkgs.lean;
+    leanc = pkgs.lean.leanc;
     # Tests that the executable can run.
-    lean-bin-run = pkgs.testers.testVersion {package = pkgs.lean;};
+    lean-bin-run = pkgs-bin.testers.testVersion {package = pkgs-bin.lean;};
   }
   // (generate-lake-tests {
-    lake = lake2nix;
-    lean = pkgs.lean;
+    lake = lake2nix-bin;
+    lean = pkgs-bin.lean;
     prefix = "bin-";
   })
   // (generate-lake-tests {
-    lake = lake2nix-built;
-    lean = pkgs-built.lean;
+    lake = lake2nix;
+    lean = pkgs.lean;
   })
