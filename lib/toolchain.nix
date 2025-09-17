@@ -48,8 +48,6 @@
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
-    # A derivation whose only purpose is to make symlinks
-    mkBareDerivation = args: stdenv.mkDerivation (args // {phases = ["installPhase"];});
     lean-all = mkDerivation {
       inherit version;
       name = "lean";
@@ -61,19 +59,33 @@
       '';
     };
     LEAN_PATH = "${lean-all}/lib/lean";
+    # A derivation whose only purpose is to make symlinks
+    mkBareDerivation = args: stdenv.mkDerivation (args // {phases = ["installPhase"];});
+    commonSharedLib = mkBareDerivation {
+      name = "libleanshared";
+      src = lean-all;
+      installPhase = ''
+        mkdir -p $out
+        ln -s ${lean-all}/lib/lean/libleanshared.* $out/
+      '';
+    };
     # Common function for reconstructing the standard libraries `Init`, `Std`,
     # `Lean` from binaries.
-    mkLib = name: let
+    mkLib = {
+      name,
+      allExternalDeps ? [],
+    }: let
       # dangeorus operation, but should be fine since we discard the store paths
       prefix = builtins.unsafeDiscardStringContext "${lean-all}/lib/lean/";
       suffix = ".olean";
+      centreOf = path: lib.removePrefix prefix (lib.removeSuffix suffix path);
       # Collect all the modules (e.g. `Init.WF` from `Init`).
       #
       # View the list of modules by evaluating `lean-bin.{Init,Std,Lean}.mods`.
       moduleList =
         builtins.map (path: {
-          name = builtins.replaceStrings ["/"] ["."] (lib.removePrefix prefix (lib.removeSuffix suffix (builtins.unsafeDiscardStringContext path)));
-          value = lib.removePrefix prefix (lib.removeSuffix suffix path);
+          name = builtins.replaceStrings ["/"] ["."] (centreOf (builtins.unsafeDiscardStringContext path));
+          value = centreOf path;
         })
         (builtins.filter (lib.hasSuffix suffix)
           (lib.filesystem.listFilesRecursive "${lean-all}/lib/lean/${name}"));
@@ -81,37 +93,40 @@
         mkBareDerivation {
           name = "${modname}";
           src = lean-all;
-          inherit LEAN_PATH;
+          LEAN_PATH = "";
           propagatedLoadDynlibs = [];
+          sharedLib = commonSharedLib;
           installPhase = ''
-            mkdir -p $out
-            ln -s ${lean-all}/lib/lean/${path}.* $out/
+            mkdir -p $out/${dirOf path}
+            base=${lean-all}/lib/lean/${path}
+            ln -s $base.{ilean,olean} $out/${dirOf path}/
           '';
         }) (builtins.listToAttrs moduleList);
     in {
-      allExternalDeps = [];
+      inherit allExternalDeps;
       staticLibDeps = [];
       mods =
         modules
         // {
+          # This builds the `Init`, `Std`, `Lean`, `Lake` libraries
           "${name}" = mkBareDerivation {
-            name = "${name}-mods";
+            inherit name LEAN_PATH;
             src = lean-all;
-            inherit LEAN_PATH;
             propagatedLoadDynlibs = [];
+            sharedLib = commonSharedLib;
             installPhase = ''
               mkdir -p $out
-              ln -s ${lean-all}/lib/lean/${name}/* $out/
+              ln -s ${lean-all}/lib/lean/${name}.{ilean,olean} $out/
             '';
           };
         };
-      sharedLib = "${lean-all}/lib/lean";
+      sharedLib = commonSharedLib;
       staticLib = mkBareDerivation {
-        inherit name;
+        name = "${name}-lib";
         src = lean-all;
         installPhase = ''
           mkdir -p $out
-          ln -s ${lean-all}/lib/lean/lib${name}.a $out/lib${name}.a
+          ln -s ${lean-all}/lib/lean/lib${name}.a $out/
         '';
       };
     };
@@ -128,14 +143,23 @@
             src = lean-all;
             installPhase = ''
               mkdir -p $out
-              ln -s ${lean-all}/lib/lean/libleanshared.so $out/libleanshared.so
+              ln -s ${lean-all}/lib/lean/libleanshared.* $out/
             '';
           };
           inherit LEAN_PATH;
-          Init = mkLib "Init";
-          Std = mkLib "Std";
-          Lean = mkLib "Lean";
-          Lake = mkLib "Lake";
+          Init = mkLib {name = "Init";};
+          Std = mkLib {
+            name = "Std";
+            allExternalDeps = [Init];
+          };
+          Lean = mkLib {
+            name = "Lean";
+            allExternalDeps = [Std];
+          };
+          Lake = mkLib {
+            name = "Lake";
+            allExternalDeps = [Init Lean];
+          };
           stdlib = [Init Std Lean Lake];
         };
       src = srcFromManifest manifest;

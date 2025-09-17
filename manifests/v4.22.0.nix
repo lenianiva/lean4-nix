@@ -133,7 +133,7 @@
               buildCommand = ''
                 mkdir -p $out
                 for i in $(cat $depRootsPath); do
-                  cp -dru --no-preserve=mode $i/. $out
+                  cp -drsu --no-preserve=mode $i/. $out
                 done
                 for i in $(cat $depsPath); do
                   cp -drsu --no-preserve=mode $i/. $out
