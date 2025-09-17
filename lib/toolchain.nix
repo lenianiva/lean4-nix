@@ -48,8 +48,6 @@
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
-    # A derivation whose only purpose is to make symlinks
-    mkBareDerivation = args: stdenv.mkDerivation (args // {phases = ["installPhase"];});
     lean-all = mkDerivation {
       inherit version;
       name = "lean";
@@ -61,19 +59,22 @@
       '';
     };
     LEAN_PATH = "${lean-all}/lib/lean";
+    # A derivation whose only purpose is to make symlinks
+    mkBareDerivation = args: stdenv.mkDerivation (args // {phases = ["installPhase"];});
     # Common function for reconstructing the standard libraries `Init`, `Std`,
     # `Lean` from binaries.
     mkLib = name: let
       # dangeorus operation, but should be fine since we discard the store paths
       prefix = builtins.unsafeDiscardStringContext "${lean-all}/lib/lean/";
       suffix = ".olean";
+      centreOf = path: lib.removePrefix prefix (lib.removeSuffix suffix path);
       # Collect all the modules (e.g. `Init.WF` from `Init`).
       #
       # View the list of modules by evaluating `lean-bin.{Init,Std,Lean}.mods`.
       moduleList =
         builtins.map (path: {
-          name = builtins.replaceStrings ["/"] ["."] (lib.removePrefix prefix (lib.removeSuffix suffix (builtins.unsafeDiscardStringContext path)));
-          value = lib.removePrefix prefix (lib.removeSuffix suffix path);
+          name = builtins.replaceStrings ["/"] ["."] (centreOf (builtins.unsafeDiscardStringContext path));
+          value = centreOf path;
         })
         (builtins.filter (lib.hasSuffix suffix)
           (lib.filesystem.listFilesRecursive "${lean-all}/lib/lean/${name}"));
@@ -84,8 +85,9 @@
           inherit LEAN_PATH;
           propagatedLoadDynlibs = [];
           installPhase = ''
-            mkdir -p $out
-            ln -s ${lean-all}/lib/lean/${path}.* $out/
+            mkdir -p $out/${dirOf path}
+            base=${lean-all}/lib/lean/${path}
+            ln -s $base.{ilean,olean} $out/${dirOf path}/
           '';
         }) (builtins.listToAttrs moduleList);
     in {
@@ -95,19 +97,19 @@
         modules
         // {
           "${name}" = mkBareDerivation {
-            name = "${name}-mods";
+            inherit name;
             src = lean-all;
             inherit LEAN_PATH;
             propagatedLoadDynlibs = [];
             installPhase = ''
               mkdir -p $out
-              ln -s ${lean-all}/lib/lean/${name}/* $out/
+              ln -s ${lean-all}/lib/lean/${name}.{ilean,olean} $out/
             '';
           };
         };
       sharedLib = "${lean-all}/lib/lean";
       staticLib = mkBareDerivation {
-        inherit name;
+        name = "${name}-dynlib";
         src = lean-all;
         installPhase = ''
           mkdir -p $out
