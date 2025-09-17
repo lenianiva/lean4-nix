@@ -119,7 +119,7 @@
     callPackage ./packages.nix {
       lean-bin =
         lean-all
-        // {
+        // rec {
           lean = lean-all;
           leanc = lean-all;
           lake = lean-all;
@@ -135,6 +135,8 @@
           Init = mkLib "Init";
           Std = mkLib "Std";
           Lean = mkLib "Lean";
+          Lake = mkLib "Lake";
+          stdlib = [Init Std Lean Lake];
         };
       src = srcFromManifest manifest;
       inherit (manifest) bootstrap;
