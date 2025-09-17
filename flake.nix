@@ -31,18 +31,35 @@
         system,
         pkgs,
         ...
-      }: {
-        _module.args.pkgs = import nixpkgs {
+      }: let
+        toolchain-file = ./templates/minimal/lean-toolchain;
+        # With built toolchain
+        pkgs-bin = import nixpkgs {
           inherit system;
-          overlays = [(self.readToolchainFile ./templates/minimal/lean-toolchain)];
+          overlays = [(self.readToolchainFile toolchain-file)];
         };
-
+        # With binary toolchain
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            (self.readToolchainFile {
+              toolchain = toolchain-file;
+              binary = false;
+            })
+          ];
+        };
+        lake2nix-bin = pkgs-bin.callPackage self.lake {};
+      in {
         packages = {
+          lean-bin = pkgs-bin.lean;
           inherit (pkgs) lean;
           inherit (pkgs.lean) cacheRoots;
         };
+        devShells.default = pkgs.mkShell {
+          buildInputs = [pkgs.pre-commit (pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
+        };
 
-        checks = import ./checks.nix {inherit pkgs;};
+        checks = (import ./checks.nix) {inherit pkgs-bin lake2nix-bin pkgs;};
 
         formatter = pkgs.alejandra;
       };

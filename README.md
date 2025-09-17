@@ -103,7 +103,7 @@ This is a form of manual dependency management.
 
 ### `lake2nix`
 
-Use `lake2nix = lean4-nix.lake { inherit pkgs; }` to generate the lake utilities.
+Use `lake2nix = pkgs.callPackage lean4-nix.lake {}` to generate the lake utilities.
 
 `lake2nix.mkPackage { ... }` automatically reads the `lake-manifest.json` file
 and builds dependencies. It takes the following arguments:
