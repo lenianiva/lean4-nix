@@ -8,10 +8,11 @@
   zstd,
   callPackage,
   fixDarwinDylibNames,
+  writeShellApplication,
   autoPatchelfHook,
   ...
 }: rec {
-  toolchain-fetch = pkgs.writeShellApplication {
+  toolchain-fetch = writeShellApplication {
     name = "toolchain-fetch";
     runtimeInputs = with pkgs; [jq git wget coreutils nix];
     text = ''exec ${./toolchain-fetch.sh} "$@"'';
@@ -59,21 +60,50 @@
       '';
     };
     LEAN_PATH = "${lean-all}/lib/lean";
-    mkLib = name: {
-      allExternalDeps = [];
-      staticLibDeps = [];
-      mods = {
-        "${name}" = mkDerivation {
-          name = "${name}-mods";
+    # Common function for reconstructing the standard libraries `Init`, `Std`,
+    # `Lean` from binaries.
+    mkLib = name: let
+      # dangeorus operation, but should be fine since we discard the store paths
+      prefix = builtins.unsafeDiscardStringContext "${lean-all}/lib/lean/";
+      suffix = ".olean";
+      # Collect all the modules (e.g. `Init.WF` from `Init`).
+      #
+      # View the list of modules by evaluating `lean-bin.{Init,Std,Lean}.mods`.
+      moduleList =
+        builtins.map (path: {
+          name = builtins.replaceStrings ["/"] ["."] (lib.removePrefix prefix (lib.removeSuffix suffix (builtins.unsafeDiscardStringContext path)));
+          value = lib.removePrefix prefix (lib.removeSuffix suffix path);
+        })
+        (builtins.filter (lib.hasSuffix suffix)
+          (lib.filesystem.listFilesRecursive "${lean-all}/lib/lean/${name}"));
+      modules = builtins.mapAttrs (modname: path:
+        mkDerivation {
+          name = "${modname}";
           src = lean-all;
           inherit LEAN_PATH;
           propagatedLoadDynlibs = [];
           installPhase = ''
             mkdir -p $out
-            ln -s ${lean-all}/lib/lean/${name}/* $out/
+            ln -s ${lean-all}/lib/lean/${path}.* $out/
           '';
+        }) (builtins.listToAttrs moduleList);
+    in {
+      allExternalDeps = [];
+      staticLibDeps = [];
+      mods =
+        modules
+        // {
+          "${name}" = mkDerivation {
+            name = "${name}-mods";
+            src = lean-all;
+            inherit LEAN_PATH;
+            propagatedLoadDynlibs = [];
+            installPhase = ''
+              mkdir -p $out
+              ln -s ${lean-all}/lib/lean/${name}/* $out/
+            '';
+          };
         };
-      };
       sharedLib = "${lean-all}/lib/lean";
       staticLib = mkDerivation {
         inherit name;
@@ -85,27 +115,28 @@
       };
     };
   in
-    (callPackage ./packages.nix {
-      lean-bin = lean-all;
+    callPackage ./packages.nix {
+      lean-bin =
+        lean-all
+        // {
+          lean = lean-all;
+          leanc = lean-all;
+          lake = lean-all;
+          leanshared = mkDerivation {
+            name = "leanshared";
+            src = lean-all;
+            installPhase = ''
+              mkdir -p $out
+              ln -s ${lean-all}/lib/lean/libleanshared.so $out/libleanshared.so
+            '';
+          };
+          inherit LEAN_PATH;
+          Init = mkLib "Init";
+          Std = mkLib "Std";
+          Lean = mkLib "Lean";
+        };
       src = srcFromManifest manifest;
       inherit (manifest) bootstrap;
       buildLeanPackage = manifest.buildLeanPackage or null;
-    })
-    // {
-      lean = lean-all;
-      leanc = lean-all;
-      lake = lean-all;
-      leanshared = mkDerivation {
-        name = "leanshared";
-        src = lean-all;
-        installPhase = ''
-          mkdir -p $out
-          ln -s ${lean-all}/lib/lean/libleanshared.so $out/libleanshared.so
-        '';
-      };
-      inherit LEAN_PATH;
-      Init = mkLib "Init";
-      Std = mkLib "Std";
-      Lean = mkLib "Lean";
     };
 }
