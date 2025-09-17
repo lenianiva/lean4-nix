@@ -40,7 +40,6 @@
       url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
       hash = manifest.toolchain.${system}.hash;
     };
-    # This is just for copying files
     mkDerivation = args @ {nativeBuildInputs ? [], ...}:
       stdenv.mkDerivation (args
         // {
@@ -49,6 +48,8 @@
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
+    # A derivation whose only purpose is to make symlinks
+    mkBareDerivation = args: stdenv.mkDerivation (args // {phases = ["installPhase"];});
     lean-all = mkDerivation {
       inherit version;
       name = "lean";
@@ -77,7 +78,7 @@
         (builtins.filter (lib.hasSuffix suffix)
           (lib.filesystem.listFilesRecursive "${lean-all}/lib/lean/${name}"));
       modules = builtins.mapAttrs (modname: path:
-        mkDerivation {
+        mkBareDerivation {
           name = "${modname}";
           src = lean-all;
           inherit LEAN_PATH;
@@ -93,7 +94,7 @@
       mods =
         modules
         // {
-          "${name}" = mkDerivation {
+          "${name}" = mkBareDerivation {
             name = "${name}-mods";
             src = lean-all;
             inherit LEAN_PATH;
@@ -105,7 +106,7 @@
           };
         };
       sharedLib = "${lean-all}/lib/lean";
-      staticLib = mkDerivation {
+      staticLib = mkBareDerivation {
         inherit name;
         src = lean-all;
         installPhase = ''
@@ -122,7 +123,7 @@
           lean = lean-all;
           leanc = lean-all;
           lake = lean-all;
-          leanshared = mkDerivation {
+          leanshared = mkBareDerivation {
             name = "leanshared";
             src = lean-all;
             installPhase = ''
