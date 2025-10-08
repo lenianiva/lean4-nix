@@ -6,7 +6,7 @@ VERSION=$1
 
 if [ -z "$VERSION" ]; then
 	echo "Must supply a tag"
-	VERSION=4.22.0
+	exit 1
 fi
 
 # Cut the revision by tag
@@ -37,6 +37,7 @@ construct_filename() {
 
 # Print Nix code
 
+printf "tag = \"v$VERSION\";\n"
 printf "rev = \"$REV\";\ntoolchain = {\n"
 
 for target in "${!targets[@]}"; do
