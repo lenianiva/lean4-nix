@@ -49,22 +49,27 @@ directory.
 
 ### Overlay
 
-The user must decide on a Lean version to use as overlay. The minimal supported
-version is `v4.11.0`, since it is the version when Lean's official Nix flake was
-deprecated. From version `v4.22.0` onwards, the each Lean build must have both
-`bootstrap` and `buildLeanPackage` functions.  There are a couple of ways to get
-an overlay. Each corresponds to a flake output:
+The user must decide on a Lean version to use as overlay. The Lean version from
+`nixpkgs` will likely not work. The minimal supported version is `v4.11.0`,
+since it is the version when Lean's official Nix flake was deprecated. From
+version `v4.22.0` onwards, the each Lean build must have both `bootstrap` and
+`buildLeanPackage` functions. There are a couple of ways to get an overlay.
+Each corresponds to a flake output. Below is a list ranked from the easiest to
+the hardest to use:
 
-- `readSrc { src; bootstrap; buildLeanPackage; }`: Builds Lean from a source folder. A
-  bootstrapping function must be provided.
-- `readFromGit{ args; bootstrap; buildLeanPackage; }`: Given parameters to
-  `builtins.fetchGit`, download a git repository
+- `readToolchainFile { toolchain; binary ? true; }`: Reads the toolchain from a
+  file. Due to Nix's pure evaluation principle, this only supports
+  `leanprover/lean4:{tag}` based `lean-toolchain` files. For any other
+  toolchains, use `readRev` or `readFromGit`.
+- `readToolchain { toolchain; binary ? true };`: `readToolchainFile` but with
+  its contents provided directly.
+- `tags.{tag}`: Lean4 tags. See the available tags in `manifests/`
 - `readRev { rev; bootstrap; buildLeanPackage; } `: Reads a revision from the
   official Lean 4 repository
-- `readToolchainFile`: Reads the toolchain from a file. Due to Nix's pure
-  evaluation principle, this only supports `leanprover/lean4:{tag}` based
-  `lean-toolchain` files. For any other toolchains, use `readRev` or `readFromGit`.
-- `tags.{tag}`: Lean4 tags. See the available tags in `manifests/`
+- `readFromGit{ args; bootstrap; buildLeanPackage; }`: Given parameters to
+  `builtins.fetchGit`, download a git repository
+- `readSrc { src; bootstrap; buildLeanPackage; }`: Builds Lean from a source folder. A
+  bootstrapping function must be provided.
 
 Then apply the overlay on `pkgs`:
 ```nix
@@ -73,7 +78,9 @@ pkgs = import nixpkgs {
   overlays = [ (lean4-nix.readToolchainFile ./lean-toolchain) ];
 };
 ```
-and `pkgs.lean` will be replaced by the chosen overlay.
+
+and `pkgs.lean` will be replaced by the chosen overlay. To take advantage of
+caching, `nixpkgs` must have the same version as the `nixpkgs` in this flake.
 
 Some users may wish to build nightly or release candidate versions without a
 corresponding manifest in `manifests/`. In this case, a common solution is to
