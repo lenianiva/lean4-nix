@@ -53,6 +53,7 @@
         packages = {
           lean-bin = pkgs-bin.lean;
           inherit (pkgs) lean;
+          inherit (pkgs.lean) cacheRoots;
         };
         devShells.default = pkgs.mkShell {
           buildInputs = [pkgs.pre-commit (pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
