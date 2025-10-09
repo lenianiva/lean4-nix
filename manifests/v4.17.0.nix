@@ -1,6 +1,12 @@
 {
   tag = "v4.17.0";
   rev = "306f36116535cd226329f562b4675b8b6dbf948c";
+  toolchain = {
+    aarch64-linux.hash = "sha256-CaImhNLSzVNvNyauBZaUV0kYae4K6/v+aF16guxd/q4=";
+    x86_64-linux.hash = "sha256-XEn77BaTtjI310CCKg9lOSUwZdydHgLl4zuOzewEuMY=";
+    x86_64-darwin.hash = "sha256-o7vKJTRrJTV06DKaCu4+6Xk4OkDy+BM6bfSkekrwvJc=";
+    aarch64-darwin.hash = "sha256-ZvAt+7Z8uBWkbvFqGBnKRoO48VMoT87WHJ2g2J+eV7s=";
+  };
   bootstrap = {
     src,
     debug ? false,

@@ -1,10 +1,16 @@
 args @ {
-  bootstrap,
   callPackage,
   lib,
   llvmPackages,
+  stdenv,
+  # If this is null, it uses the `buildLeanPackage.nix` in the provided `src`,
+  # which only exists for versions 4.21 and below.
   buildLeanPackage ? null,
-  src,
+  # Either provide a built Lean ...
+  lean-bin ? null,
+  # Or provide sources and bootstrapping functions
+  src ? null,
+  bootstrap ? null,
 }: let
   lean = callPackage bootstrap (args
     // {
@@ -12,6 +18,8 @@ args @ {
       inherit src llvmPackages;
       buildLeanPackage = buildLeanPackageOverride;
     });
+
+  stage1 = lib.defaultTo lean.stage1 lean-bin;
 
   makeOverridableLeanPackage = f: let
     newF = origArgs:
@@ -27,19 +35,16 @@ args @ {
 
   buildLeanPackageOverride = makeOverridableLeanPackage (
     callPackage (
-      if builtins.isNull buildLeanPackage
-      # Only exists for versions 4.21 and below.
-      then import "${src}/nix/buildLeanPackage.nix"
-      else buildLeanPackage
+      lib.defaultTo (import "${src}/nix/buildLeanPackage.nix") buildLeanPackage
     )
     (
       args
       // {
-        inherit (lean) stdenv;
-        lean = lean.stage1;
-        inherit (lean.stage1) leanc;
+        inherit stdenv;
+        lean = stage1;
+        inherit (stage1) leanc;
       }
     )
   );
 in
-  {buildLeanPackage = buildLeanPackageOverride;} // lean.stage1
+  {buildLeanPackage = buildLeanPackageOverride;} // stage1

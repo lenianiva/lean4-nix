@@ -14,8 +14,8 @@ Features:
 
 ## Example
 
-The default template is a good starting point for projects requiring manual
-dependency management:
+The default minimal template is for projects requiring manual dependency
+management:
 
 ``` sh
 nix flake new --template github:lenianiva/lean4-nix ./minimal
@@ -31,7 +31,9 @@ nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 ## Caching
 
 This project has CI by Garnix and uses
-[`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching.
+[`cache.garnix.io`](https://garnix.io/docs/caching) for binary caching. To use
+the cache, there must be a match between the nixpkgs version listed in
+`flake.lock` and the downstream project. Only the newest version will be cached.
 
 ## Flake outputs
 
@@ -49,22 +51,29 @@ directory.
 
 ### Overlay
 
-The user must decide on a Lean version to use as overlay. The minimal supported
-version is `v4.11.0`, since it is the version when Lean's official Nix flake was
+The user must decide on a Lean version to use as overlay. The Lean version from
+`nixpkgs` will likely not work of the box. The minimal supported version is
+`v4.11.0`, since it is the version when Lean's official Nix flake was
 deprecated. From version `v4.22.0` onwards, the each Lean build must have both
-`bootstrap` and `buildLeanPackage` functions.  There are a couple of ways to get
-an overlay. Each corresponds to a flake output:
+`bootstrap` and `buildLeanPackage` functions. There are a couple of ways to get
+an overlay.  Each corresponds to a flake output. Below is a list ranked from the
+easiest to the hardest to use:
 
-- `readSrc { src; bootstrap; buildLeanPackage; }`: Builds Lean from a source folder. A
-  bootstrapping function must be provided.
-- `readFromGit{ args; bootstrap; buildLeanPackage; }`: Given parameters to
-  `builtins.fetchGit`, download a git repository
+- `readToolchainFile { toolchain; binary ? true; }`: Reads the toolchain from a
+  file. Due to Nix's pure evaluation principle, this only supports
+  `leanprover/lean4:{tag}` based `lean-toolchain` files. For any other
+  toolchains, use `readRev` or `readFromGit`.
+- `readToolchain { toolchain; binary ? true };`: `readToolchainFile` but with
+  its contents provided directly.
+- `readBinaryToolchain manifest`: Reads the binary toolchain from a manifest
+  given in the same format as `manifests/*.nix`.
+- `tags.{tag}`: Lean4 tags. See the available tags in `manifests/`
 - `readRev { rev; bootstrap; buildLeanPackage; } `: Reads a revision from the
   official Lean 4 repository
-- `readToolchainFile`: Reads the toolchain from a file. Due to Nix's pure
-  evaluation principle, this only supports `leanprover/lean4:{tag}` based
-  `lean-toolchain` files. For any other toolchains, use `readRev` or `readFromGit`.
-- `tags.{tag}`: Lean4 tags. See the available tags in `manifests/`
+- `readFromGit{ args; bootstrap; buildLeanPackage; }`: Given parameters to
+  `builtins.fetchGit`, download a git repository
+- `readSrc { src; bootstrap; buildLeanPackage; }`: Builds Lean from a source folder. A
+  bootstrapping function must be provided.
 
 Then apply the overlay on `pkgs`:
 ```nix
@@ -73,6 +82,7 @@ pkgs = import nixpkgs {
   overlays = [ (lean4-nix.readToolchainFile ./lean-toolchain) ];
 };
 ```
+
 and `pkgs.lean` will be replaced by the chosen overlay.
 
 Some users may wish to build nightly or release candidate versions without a
@@ -103,7 +113,7 @@ This is a form of manual dependency management.
 
 ### `lake2nix`
 
-Use `lake2nix = lean4-nix.lake { inherit pkgs; }` to generate the lake utilities.
+Use `lake2nix = pkgs.callPackage lean4-nix.lake {}` to generate the lake utilities.
 
 `lake2nix.mkPackage { ... }` automatically reads the `lake-manifest.json` file
 and builds dependencies. It takes the following arguments:
@@ -146,11 +156,17 @@ The Lean version is not listed in the `manifests/` directory. Use `readRev` or
 
 Use `nix flake check` to check the template builds.
 
-Update the template `lean-toolchain` files when new Lean versions come out.
+Update the template `lean-toolchain` files when new Lean versions come out. When
+a new version is released, execute
+
+``` sh
+toolchain fetch $VERSION
+```
+to generate new toolchain hashes.
 
 All code must be formatted with `alejandra` before merging into `main`. To use
 it, execute
 
 ```sh
-nix fmt
+nix fmt .
 ```

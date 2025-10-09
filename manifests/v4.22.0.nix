@@ -1,6 +1,12 @@
 {
   tag = "v4.22.0";
   rev = "ba2cbbf09d4978f416e0ebd1fceeebc2c4138c05";
+  toolchain = {
+    aarch64-linux.hash = "sha256-In50PvEu/s38OTagPiGqK5TjNgJQQRJeADgU22QAHZQ=";
+    x86_64-linux.hash = "sha256-hQl6TWWf44gZOl77DEE7iA4QHxKQzEHQDrYIR7GPBk4=";
+    x86_64-darwin.hash = "sha256-dkvEKn4N+lr2Qcl+BIqJ+6lNFImv1sPtewE0JhcjrcA=";
+    aarch64-darwin.hash = "sha256-hLIaeNwtOwiyNRePru5NpcZQ2tWp/K+xIQIqaX1sVuI=";
+  };
   inherit (import ./v4.19.0.nix) bootstrap;
   buildLeanPackage = {
     lean,
@@ -127,7 +133,7 @@
               buildCommand = ''
                 mkdir -p $out
                 for i in $(cat $depRootsPath); do
-                  cp -dru --no-preserve=mode $i/. $out
+                  cp -drsu --no-preserve=mode $i/. $out
                 done
                 for i in $(cat $depsPath); do
                   cp -drsu --no-preserve=mode $i/. $out

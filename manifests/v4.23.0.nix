@@ -1,6 +1,12 @@
 {
   tag = "v4.23.0";
   rev = "50aaf682e9b74ab92880292a25c68baa1cc81c87";
+  toolchain = {
+    aarch64-linux.hash = "sha256-NZyUraVyNE/38V/A5+wylntaXMFODPopRTdyeWkbI1Y=";
+    x86_64-linux.hash = "sha256-7NAo1vZCthtFHIaHrusk3VN4n7/ct9StuPXPYOsgIro=";
+    x86_64-darwin.hash = "sha256-kExa2JYk+cc+A3Y3j0lfIaXsB9LiNElFo9vSnMpVXsU=";
+    aarch64-darwin.hash = "sha256-5azyw6ZlID4f+q9EXwwArB0+3/UUAqjMCNPQ1iF1/oI=";
+  };
   inherit (import ./v4.22.0.nix) buildLeanPackage;
   bootstrap = {
     debug ? false,
