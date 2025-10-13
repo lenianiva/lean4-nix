@@ -160,7 +160,6 @@
           };
       in
         (all: all // all.lean) rec {
-          inherit (Lean) emacs-dev emacs-package vscode-dev vscode-package;
           Init = attachSharedLib leanshared Init';
           Std = attachSharedLib leanshared Std' // {allExternalDeps = [Init];};
           Lean = attachSharedLib leanshared Lean' // {allExternalDeps = [Std];};
