@@ -24,9 +24,22 @@
     };
   in
     lib.mapAttrs' (name: value: lib.nameValuePair "${prefix}${name}" value)
-    {
+    rec {
       minimal-direct-bin = minimal-direct.executable;
       minimal-manifest-bin = minimal-manifest.executable;
+      minimal-exec = pkgs.testers.testEqualContents {
+        assertion = "Call minimal";
+        expected = pkgs.writeTextFile {
+          name = "expected";
+          text = "Da";
+        };
+        actual =
+          pkgs.runCommand "actual"
+          {}
+          ''
+            ${minimal-direct-bin}/bin/example | head -c 2 > $out
+          '';
+      };
       dependency-manifest-bin = dependency-manifest.executable;
     };
   lake2nix = pkgs.callPackage lib/lake.nix {};
