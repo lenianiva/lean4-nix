@@ -65,7 +65,7 @@
         rm -r include/clang
         ln -s ${clang}/resource-root/include include/clang
 
-        # Remove
+        # Remove shipped clang libraries
         rm -r lib/clang
 
         mv ./* $out/

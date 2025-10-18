@@ -86,4 +86,5 @@ in
   // (generate-lake-tests {
     lake = lake2nix;
     lean = pkgs.lean;
+    prefix = "src-";
   })
