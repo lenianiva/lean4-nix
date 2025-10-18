@@ -6,6 +6,8 @@
   stdenv,
   system,
   zstd,
+  clang,
+  lld,
   callPackage,
   fixDarwinDylibNames,
   writeShellApplication,
@@ -55,6 +57,17 @@
       nativeBuildInputs = [zstd];
       installPhase = ''
         mkdir -p $out/
+        rm bin/{clang,ld.lld,llvm-ar}
+        ln -s ${clang}/bin/clang bin/
+        ln -s ${lld}/bin/ld.lld bin/
+
+        # Replace includes
+        rm -r include/clang
+        ln -s ${clang}/resource-root/include include/clang
+
+        # Remove shipped clang libraries
+        rm -r lib/clang
+
         mv ./* $out/
       '';
     };
