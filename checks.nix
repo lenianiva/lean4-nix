@@ -40,6 +40,32 @@
             ${minimal-direct-bin}/bin/example | head -c 2 > $out
           '';
       };
+      # Ensure the built executables can actually run on a VM
+      minimal-exec-vm = pkgs.testers.runNixOSTest ({pkgs, ...}: {
+        name = "Execute Lean Package";
+
+        nodes = {
+          server = {
+            config,
+            pkgs,
+            ...
+          }: {
+            networking = {hostName = "hakkero";};
+            environment = {
+              variables.EDITOR = "vim";
+              systemPackages = [
+                pkgs.lean
+                minimal-direct-bin
+              ];
+            };
+          };
+        };
+
+        testScript = ''
+          hakkero.start()
+          hakkero.succeed("example")
+        '';
+      });
       dependency-manifest-bin = dependency-manifest.executable;
     };
   lake2nix = pkgs.callPackage lib/lake.nix {};
