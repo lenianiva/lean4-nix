@@ -55,9 +55,10 @@
       name = "lean";
       src = tarball;
       nativeBuildInputs = [zstd];
+      # Use `rm -f` here since not all of these executables exist on every platform
       installPhase = ''
         mkdir -p $out/
-        rm bin/{clang,ld.lld,llvm-ar}
+        rm -f bin/{clang,ld.lld,llvm-ar}
         ln -s ${clang}/bin/clang bin/
         ln -s ${lld}/bin/ld.lld bin/
 
