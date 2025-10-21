@@ -74,9 +74,11 @@
 
         wrapProgram $out/bin/lean \
           --prefix PATH : ${compile-bin}
-        wrapProgram $out/bin/lake \
+        wrapProgram $out/bin/leanmake \
           --prefix PATH : ${compile-bin}
         wrapProgram $out/bin/leanc \
+          --prefix PATH : ${compile-bin}
+        wrapProgram $out/bin/lake \
           --prefix PATH : ${compile-bin}
       '';
     };
