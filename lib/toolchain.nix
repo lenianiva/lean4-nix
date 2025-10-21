@@ -144,12 +144,13 @@
       };
     };
     lean-bin = mkBareDerivation {
-      name = "lean-bin";
+      name = "lean";
       src = lean-all;
       installPhase = ''
         mkdir -p $out
         ln -s ${lean-all}/bin $out/
       '';
+      inherit version;
     };
   in
     callPackage ./packages.nix {
