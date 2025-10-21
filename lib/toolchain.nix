@@ -55,6 +55,7 @@
       name = "lean";
       src = tarball;
       nativeBuildInputs = [zstd];
+      buildInputs = [clang lld];
       # Use `rm -f` here since not all of these executables exist on every platform
       installPhase = ''
         mkdir -p $out/
@@ -147,6 +148,8 @@
     lean-bin = mkBareDerivation {
       name = "lean";
       src = lean-all;
+      # Critical for building anything linked against Lean libraries
+      buildInputs = [clang lld];
       installPhase = ''
         mkdir -p $out
         ln -s ${lean-all}/bin $out/
