@@ -55,9 +55,10 @@
       name = "lean";
       src = tarball;
       nativeBuildInputs = [zstd];
+      # Use `rm -f` here since not all of these executables exist on every platform
       installPhase = ''
         mkdir -p $out/
-        rm bin/{clang,ld.lld,llvm-ar}
+        rm -f bin/{clang,ld.lld,llvm-ar}
         ln -s ${clang}/bin/clang bin/
         ln -s ${lld}/bin/ld.lld bin/
 
@@ -143,11 +144,21 @@
         '';
       };
     };
+    lean-bin = mkBareDerivation {
+      name = "lean";
+      src = lean-all;
+      installPhase = ''
+        mkdir -p $out
+        ln -s ${lean-all}/bin $out/
+      '';
+      inherit version;
+    };
   in
     callPackage ./packages.nix {
       lean-bin =
-        lean-all
+        lean-bin
         // rec {
+          inherit lean-all;
           lean = lean-all;
           leanc = lean-all;
           lake = lean-all;
