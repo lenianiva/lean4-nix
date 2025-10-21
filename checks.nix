@@ -25,6 +25,7 @@
   in
     lib.mapAttrs' (name: value: lib.nameValuePair "${prefix}${name}" value)
     rec {
+      minimal-direct-lib = minimal-direct.sharedLib;
       minimal-direct-bin = minimal-direct.executable;
       minimal-manifest-bin = minimal-manifest.executable;
       minimal-exec = pkgs.testers.testEqualContents {
