@@ -9,6 +9,7 @@
   clang,
   lld,
   callPackage,
+  makeWrapper,
   fixDarwinDylibNames,
   writeShellApplication,
   autoPatchelfHook,
@@ -50,16 +51,17 @@
             ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
+    compile-bin = lib.makeBinPath [lld];
     lean-all = mkDerivation {
       inherit version;
       name = "lean";
       src = tarball;
-      nativeBuildInputs = [zstd];
+      nativeBuildInputs = [zstd makeWrapper];
+      # Use `rm -f` here since not all of these executables exist on every platform
       installPhase = ''
         mkdir -p $out/
-        rm bin/{clang,ld.lld,llvm-ar}
+        rm -f bin/{clang,ld.lld,llvm-ar}
         ln -s ${clang}/bin/clang bin/
-        ln -s ${lld}/bin/ld.lld bin/
 
         # Replace includes
         rm -r include/clang
@@ -69,6 +71,15 @@
         rm -r lib/clang
 
         mv ./* $out/
+
+        wrapProgram $out/bin/lean \
+          --prefix PATH : ${compile-bin}
+        wrapProgram $out/bin/leanmake \
+          --prefix PATH : ${compile-bin}
+        wrapProgram $out/bin/leanc \
+          --prefix PATH : ${compile-bin}
+        wrapProgram $out/bin/lake \
+          --prefix PATH : ${compile-bin}
       '';
     };
     LEAN_PATH = "${lean-all}/lib/lean";
@@ -143,14 +154,25 @@
         '';
       };
     };
+    lean-bin = mkBareDerivation {
+      name = "lean";
+      src = lean-all;
+      # Critical for building anything linked against Lean libraries
+      installPhase = ''
+        mkdir -p $out
+        ln -s ${lean-all}/bin $out/
+      '';
+      inherit version;
+    };
   in
     callPackage ./packages.nix {
       lean-bin =
-        lean-all
+        lean-bin
         // rec {
-          lean = lean-all;
-          leanc = lean-all;
-          lake = lean-all;
+          inherit lean-all;
+          lean = lean-bin;
+          leanc = lean-bin;
+          lake = lean-bin;
           leanshared = mkBareDerivation {
             name = "leanshared";
             src = lean-all;
