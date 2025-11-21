@@ -40,7 +40,7 @@
       aarch64-darwin = "darwin_aarch64";
     };
     tarball = fetchurl {
-      url = "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
+      url = manifest.toolchain.${system}.url or "https://github.com/leanprover/lean4/releases/download/${manifest.tag}/lean-${version}-${system-tag}.tar.zst";
       hash = manifest.toolchain.${system}.hash;
     };
     mkDerivation = args @ {nativeBuildInputs ? [], ...}:
