@@ -27,7 +27,7 @@
     rec {
       minimal-direct-lib = minimal-direct.sharedLib;
       minimal-direct-bin = minimal-direct.executable;
-      minimal-manifest-bin = minimal-manifest.executable;
+      minimal-manifest-bin = minimal-manifest;
       minimal-exec = pkgs.testers.testEqualContents {
         assertion = "Call minimal";
         expected = pkgs.writeTextFile {
@@ -67,7 +67,7 @@
           hakkero.succeed("example")
         '';
       });
-      dependency-manifest-bin = dependency-manifest.executable;
+      inherit dependency-manifest;
     };
   lake2nix = pkgs.callPackage lib/lake.nix {};
 in
