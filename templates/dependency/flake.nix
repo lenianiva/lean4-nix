@@ -31,12 +31,10 @@
           overlays = [(lean4-nix.readToolchainFile ./lean-toolchain)];
         };
 
-        packages.default =
-          ((lean4-nix.lake {inherit pkgs;}).mkPackage {
-            src = ./.;
-            roots = ["Example"];
-          })
-          .executable;
+        packages.default = (lean4-nix.lake {inherit pkgs;}).mkPackage {
+          src = ./.;
+          roots = ["Example"];
+        };
 
         devShells.default = pkgs.mkShell {
           packages = with pkgs.lean; [lean-all];

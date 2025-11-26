@@ -41,7 +41,7 @@
   in
     stdenv.mkDerivation (
       {
-        buildInputs = [lean];
+        buildInputs = [lean.lean-all];
 
         configurePhase = ''
           rm lake-manifest.json
