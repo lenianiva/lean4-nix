@@ -15,11 +15,12 @@
     manifest = lib.importJSON manifestFile;
   in
     lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
-  mkPackageWithDeps = {
+  # A wrapper around `mkDerivation` which sets up the lake manifest
+  mkLakeDerivation = args @ {
     name,
     src,
     deps ? {},
-    url,
+    ...
   }: let
     manifest = importLakeManifest "${src}/lake-manifest.json";
     # create a surrogate manifest
@@ -38,22 +39,26 @@
           manifest.packages)
       );
   in
-    stdenv.mkDerivation {
-      inherit src name;
-      buildInputs = [lean];
+    stdenv.mkDerivation (
+      {
+        buildInputs = [lean];
 
-      buildPhase = ''
-        mkdir .lake
-        rm lake-manifest.json
-        ln -s ${replaceManifest} lake-manifest.json
-        lake build
-      '';
-      installPhase = ''
-        mkdir -p $out/
-        mv * $out/
-        mv .lake $out/
-      '';
-    };
+        configurePhase = ''
+          rm lake-manifest.json
+          ln -s ${replaceManifest} lake-manifest.json
+        '';
+
+        buildPhase = ''
+          lake build
+        '';
+        installPhase = ''
+          mkdir -p $out/
+          mv * $out/
+          mv .lake $out/
+        '';
+      }
+      // (builtins.removeAttrs args ["deps"])
+    );
   # Builds a Lean package by reading the manifest file.
   mkPackage = args @ {
     # Path to the source
@@ -64,6 +69,7 @@
     roots ? null,
     # Static library dependencies
     staticLibDeps ? [],
+    ...
   }: let
     manifest = importLakeManifest manifestFile;
 
@@ -91,7 +97,7 @@
     # Build all dependencies
     manifestDeps = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
-        value = mkPackageWithDeps {
+        value = mkLakeDerivation {
           inherit (info) name url;
           src = depSources.${info.name};
           deps = builtins.listToAttrs (builtins.map (name: {
@@ -102,42 +108,29 @@
         };
       })
       manifest.packages);
-    replaceManifest =
-      pkgs.writers.writeJSON "lake-manifest.json"
-      (
-        lib.setAttr manifest "packages" (builtins.map ({
-            name,
-            inherited,
-            ...
-          }: {
-            inherit inherited name;
-            type = "path";
-            dir = manifestDeps.${name};
-          })
-          manifest.packages)
-      );
   in
-    stdenv.mkDerivation {
+    mkLakeDerivation {
       inherit src;
       inherit (manifest) name;
-      buildInputs = [lean];
+      deps = manifestDeps;
       nativeBuildInputs = staticLibDeps;
-      buildPhase = ''
-        mkdir .lake
-        rm lake-manifest.json
-        ln -s ${replaceManifest} lake-manifest.json
-        lake build #${builtins.concatStringsSep " " roots}
-      '';
-      installPhase = ''
-        mkdir $out
-        if [ -d .lake/build/bin ]; then
-          mv .lake/build/bin $out/
-        fi
-        if [ -d .lake/build/lib ]; then
-          mv .lake/build/lib $out/
-        fi
-      '';
+      buildPhase =
+        args.buildPhase
+        or ''
+          lake build #${builtins.concatStringsSep " " roots}
+        '';
+      installPhase =
+        args.installPhase
+        or ''
+          mkdir $out
+          if [ -d .lake/build/bin ]; then
+            mv .lake/build/bin $out/
+          fi
+          if [ -d .lake/build/lib ]; then
+            mv .lake/build/lib $out/
+          fi
+        '';
     };
 in {
-  inherit mkPackage;
+  inherit mkLakeDerivation mkPackage;
 }
