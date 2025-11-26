@@ -122,8 +122,10 @@ and builds dependencies. It takes the following arguments:
 - `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file.
 - `roots`: Lean modules at the root of the import tree. Defaults to the project
   name from `manifestFile`
-- `deps ? [ Init Std Lean ]`: Additional Lean package dependencies.
 - `staticLibDeps ? []`: List of static libraries to link with.
+- `buildPhase`: If provided, override the build phase command (useful for
+  building library facets and unit tests)
+- `installPhase`: If provided, override the install phase
 
 ### `buildLeanPackage`
 
