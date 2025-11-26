@@ -3,8 +3,6 @@
   lib,
   stdenv,
   lean,
-  git,
-  symlinkJoin,
 }: let
   capitalize = s: let
     first = lib.toUpper (builtins.substring 0 1 s);
@@ -80,6 +78,7 @@
         inherit (info) name;
         value = builtins.fetchGit {
           inherit (info) url rev;
+          shallow = true;
         };
       })
       manifest.packages);
