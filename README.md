@@ -152,9 +152,11 @@ Update the template `lean-toolchain` files when new Lean versions come out. When
 a new version is released, execute
 
 ``` sh
-toolchain fetch $VERSION
+toolchain fetch $VERSION [$VERSION_TAG]
 ```
-to generate new toolchain hashes.
+
+to generate new toolchain hashes. Supply `$VERSION_TAG` to address any version
+tag mismatches (e.g. `4.20.1` incorrectly tagged as `4.20.0`).
 
 All code must be formatted with `alejandra` before merging into `main`. To use
 it, execute
