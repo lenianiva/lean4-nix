@@ -16,4 +16,5 @@
   "v4.24.0" = import ./v4.24.0.nix;
   "v4.25.0" = import ./v4.25.0.nix;
   "v4.25.1" = import ./v4.25.1.nix;
+  "v4.25.2" = import ./v4.25.2.nix;
 }
