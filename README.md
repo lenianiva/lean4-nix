@@ -116,7 +116,8 @@ This is a form of manual dependency management.
 Use `lake2nix = pkgs.callPackage lean4-nix.lake {}` to generate the lake utilities.
 
 `lake2nix.mkPackage { ... }` automatically reads the `lake-manifest.json` file
-and builds dependencies. It takes the following arguments:
+and builds its dependencies. The output is a derivation. It takes the following
+arguments:
 
 - `src`: The source directory
 - `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file.
@@ -137,17 +138,6 @@ in a non-derivation format. Generally, the attributes available are:
 - `cTree`, `oTree`, `iTree`: Trees of C files/`.o` files/`.ilean` files
 
 ## Troubleshooting
-
-### attribute '"{Lean,Init}.*"' is missing
-
-If you see this error, add these packages to `deps` in either `buildLeanPackage`
-or `mkPackage`.
-
-``` nix
-{
-  deps = with pkgs.lean; [ Init Std Lean ];
-}
-```
 
 ### Only `leanprover/lean4:{tag}` toolchains are supported
 
