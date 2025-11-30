@@ -25,13 +25,15 @@
         system,
         pkgs,
         ...
-      }: {
+      }: let
+        lake2nix = pkgs.callPackage lean4-nix.lake {};
+      in {
         _module.args.pkgs = import nixpkgs {
           inherit system;
           overlays = [(lean4-nix.readToolchainFile ./lean-toolchain)];
         };
 
-        packages.default = (lean4-nix.lake {inherit pkgs;}).mkPackage {
+        packages.default = lake2nix.mkPackage {
           src = ./.;
           roots = ["Example"];
         };
