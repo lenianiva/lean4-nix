@@ -3,6 +3,11 @@
   lib,
   stdenv,
   lean,
+  # NOTE: Since mkPackage builds dependencies recursively, I'm not sure if there
+  # are any better way to define per-dependency build inputs. The only viable
+  # alternative that I can think of is to make a repository of per-package
+  # derivations.
+  extraBuildInputs ? [],
 }: let
   capitalize = s: let
     first = lib.toUpper (builtins.substring 0 1 s);
@@ -12,7 +17,9 @@
   importLakeManifest = manifestFile: let
     manifest = lib.importJSON manifestFile;
   in
-    lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
+    lib.warnIf (manifest.version != "1.1.0")
+    ("Unknown version: " + builtins.toString manifest.version)
+    manifest;
   # A wrapper around `mkDerivation` which sets up the lake manifest
   mkLakeDerivation = args @ {
     name,
@@ -24,22 +31,20 @@
     # create a surrogate manifest
     replaceManifest =
       pkgs.writers.writeJSON "lake-manifest.json"
-      (
-        lib.setAttr manifest "packages" (builtins.map ({
-            name,
-            inherited ? false,
-            ...
-          }: {
-            inherit name inherited;
-            type = "path";
-            dir = deps.${name};
-          })
-          manifest.packages)
-      );
+      (lib.setAttr manifest "packages" (builtins.map
+        ({
+          name,
+          inherited ? false,
+          ...
+        }: {
+          inherit name inherited;
+          type = "path";
+          dir = deps.${name};
+        })
+        manifest.packages));
   in
-    stdenv.mkDerivation (
-      {
-        buildInputs = [lean.lean-all];
+    stdenv.mkDerivation ({
+        buildInputs = [lean.lean-all] ++ extraBuildInputs;
 
         configurePhase = ''
           rm lake-manifest.json
@@ -55,8 +60,7 @@
           mv .lake $out/
         '';
       }
-      // (builtins.removeAttrs args ["deps"])
-    );
+      // (builtins.removeAttrs args ["deps"]));
   # Builds a Lean package by reading the manifest file.
   mkPackage = args @ {
     # Path to the source
@@ -71,8 +75,7 @@
   }: let
     manifest = importLakeManifest manifestFile;
 
-    roots =
-      args.roots or [(capitalize manifest.name)];
+    roots = args.roots or [(capitalize manifest.name)];
 
     depSources = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
@@ -83,15 +86,12 @@
       })
       manifest.packages);
     # construct dependency name map
-    flatDeps =
-      lib.mapAttrs (
-        _name: src: let
-          manifest = importLakeManifest "${src}/lake-manifest.json";
-          deps = builtins.map ({name, ...}: name) manifest.packages;
-        in
-          deps
-      )
-      depSources;
+    flatDeps = lib.mapAttrs (_name: src: let
+      manifest = importLakeManifest "${src}/lake-manifest.json";
+      deps = builtins.map ({name, ...}: name) manifest.packages;
+    in
+      deps)
+    depSources;
 
     # Build all dependencies
     manifestDeps = builtins.listToAttrs (builtins.map (info: {
@@ -130,6 +130,4 @@
           fi
         '';
     };
-in {
-  inherit mkLakeDerivation mkPackage;
-}
+in {inherit mkLakeDerivation mkPackage;}
