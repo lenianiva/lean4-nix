@@ -15,7 +15,6 @@
     lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
   # A wrapper around `mkDerivation` which sets up the lake manifest
   mkLakeDerivation = args @ {
-    name,
     src,
     deps ? {},
     ...
@@ -65,12 +64,12 @@
     );
   # Builds a Lean package by reading the manifest file.
   mkPackage = args @ {
+    # Name of the build target, must be defined in `lakefile.lean`
+    name,
     # Path to the source
     src,
     # Path to the `lake-manifest.json` file
     manifestFile ? "${src}/lake-manifest.json",
-    # Root module
-    roots ? null,
     # Static library dependencies
     staticLibDeps ? [],
     # Override derivation args in dependencies
@@ -78,9 +77,6 @@
     ...
   }: let
     manifest = importLakeManifest manifestFile;
-
-    roots =
-      args.roots or [(capitalize manifest.name)];
 
     depSources = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
@@ -118,15 +114,14 @@
       manifest.packages);
   in
     mkLakeDerivation ({
-        inherit src;
-        inherit (manifest) name;
+        inherit name src;
         deps = manifestDeps;
         nativeBuildInputs = staticLibDeps;
         buildPhase =
           args.buildPhase
           or ''
             runHook preBuild
-            lake build #${builtins.concatStringsSep " " roots}
+            lake build ${name}
             runHook postBuild
           '';
         installPhase =
