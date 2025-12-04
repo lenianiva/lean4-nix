@@ -15,12 +15,12 @@
       src = lib.cleanSource ./templates/minimal;
     };
     minimal-manifest = lake.mkPackage {
+      name = "minimal";
       src = lib.cleanSource ./templates/minimal;
-      roots = ["Main"];
     };
     dependency-manifest = lake.mkPackage {
+      name = "Example";
       src = lib.cleanSource ./templates/dependency;
-      roots = ["Example"];
     };
   in
     lib.mapAttrs' (name: value: lib.nameValuePair "${prefix}${name}" value)
