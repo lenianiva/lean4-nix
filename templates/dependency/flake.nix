@@ -34,8 +34,8 @@
         };
 
         packages.default = lake2nix.mkPackage {
+          name = "Example";
           src = ./.;
-          roots = ["Example"];
         };
 
         devShells.default = pkgs.mkShell {
