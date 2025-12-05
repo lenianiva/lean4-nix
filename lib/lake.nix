@@ -15,7 +15,6 @@
     lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
   # A wrapper around `mkDerivation` which sets up the lake manifest
   mkLakeDerivation = args @ {
-    name,
     src,
     deps ? {},
     ...
@@ -42,39 +41,44 @@
         buildInputs = [lean.lean-all];
 
         configurePhase = ''
+          runHook preConfigure
           rm lake-manifest.json
           ln -s ${replaceManifest} lake-manifest.json
+          runHook postConfigure
         '';
 
         buildPhase = ''
+          runHook preBuild
           lake build
+          runHook postBuild
         '';
         installPhase = ''
+          runHook preInstall
           mkdir -p $out/
           mv * $out/
           mv .lake $out/
+          runHook postInstall
         '';
       }
       // (builtins.removeAttrs args ["deps"])
     );
   # Builds a Lean package by reading the manifest file.
   mkPackage = args @ {
+    # Name of the build target, must be defined in `lakefile.lean`
+    name,
     # Path to the source
     src,
     # Path to the `lake-manifest.json` file
     manifestFile ? "${src}/lake-manifest.json",
-    # Root module
-    roots ? null,
     # Static library dependencies
     staticLibDeps ? [],
     # Override derivation args in dependencies
     depOverride ? {},
+    # Override derivation entirely in dependencies
+    depOverrideDeriv ? {},
     ...
   }: let
     manifest = importLakeManifest manifestFile;
-
-    roots =
-      args.roots or [(capitalize manifest.name)];
 
     depSources = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
@@ -98,32 +102,37 @@
     # Build all dependencies
     manifestDeps = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
-        value = mkLakeDerivation ({
-            inherit (info) name url;
-            src = depSources.${info.name};
-            deps = builtins.listToAttrs (builtins.map (name: {
-                inherit name;
-                value = manifestDeps.${name};
-              })
-              flatDeps.${info.name});
-          }
-          // (depOverride.${info.name} or {}));
+        value =
+          depOverrideDeriv.${
+            info.name
+          } or (mkLakeDerivation ({
+              inherit (info) name url;
+              src = depSources.${info.name};
+              deps = builtins.listToAttrs (builtins.map (name: {
+                  inherit name;
+                  value = manifestDeps.${name};
+                })
+                flatDeps.${info.name});
+            }
+            // (depOverride.${info.name} or {})));
       })
       manifest.packages);
   in
     mkLakeDerivation ({
-        inherit src;
-        inherit (manifest) name;
+        inherit name src;
         deps = manifestDeps;
         nativeBuildInputs = staticLibDeps;
         buildPhase =
           args.buildPhase
           or ''
-            lake build #${builtins.concatStringsSep " " roots}
+            runHook preBuild
+            lake build ${name}
+            runHook postBuild
           '';
         installPhase =
           args.installPhase
           or ''
+            runHook preInstall
             mkdir $out
             if [ -d .lake/build/bin ]; then
               mv .lake/build/bin $out/
@@ -131,6 +140,7 @@
             if [ -d .lake/build/lib ]; then
               mv .lake/build/lib $out/
             fi
+            runHook postInstall
           '';
       }
       // (depOverride.${manifest.name} or {}));
