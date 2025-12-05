@@ -67,6 +67,8 @@
     roots ? null,
     # Static library dependencies
     staticLibDeps ? [],
+    # Override derivation args in dependencies
+    depOverride ? {},
     ...
   }: let
     manifest = importLakeManifest manifestFile;
@@ -96,40 +98,42 @@
     # Build all dependencies
     manifestDeps = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
-        value = mkLakeDerivation {
-          inherit (info) name url;
-          src = depSources.${info.name};
-          deps = builtins.listToAttrs (builtins.map (name: {
-              inherit name;
-              value = manifestDeps.${name};
-            })
-            flatDeps.${info.name});
-        };
+        value = mkLakeDerivation ({
+            inherit (info) name url;
+            src = depSources.${info.name};
+            deps = builtins.listToAttrs (builtins.map (name: {
+                inherit name;
+                value = manifestDeps.${name};
+              })
+              flatDeps.${info.name});
+          }
+          // (depOverride.${info.name} or {}));
       })
       manifest.packages);
   in
-    mkLakeDerivation {
-      inherit src;
-      inherit (manifest) name;
-      deps = manifestDeps;
-      nativeBuildInputs = staticLibDeps;
-      buildPhase =
-        args.buildPhase
-        or ''
-          lake build #${builtins.concatStringsSep " " roots}
-        '';
-      installPhase =
-        args.installPhase
-        or ''
-          mkdir $out
-          if [ -d .lake/build/bin ]; then
-            mv .lake/build/bin $out/
-          fi
-          if [ -d .lake/build/lib ]; then
-            mv .lake/build/lib $out/
-          fi
-        '';
-    };
+    mkLakeDerivation ({
+        inherit src;
+        inherit (manifest) name;
+        deps = manifestDeps;
+        nativeBuildInputs = staticLibDeps;
+        buildPhase =
+          args.buildPhase
+          or ''
+            lake build #${builtins.concatStringsSep " " roots}
+          '';
+        installPhase =
+          args.installPhase
+          or ''
+            mkdir $out
+            if [ -d .lake/build/bin ]; then
+              mv .lake/build/bin $out/
+            fi
+            if [ -d .lake/build/lib ]; then
+              mv .lake/build/lib $out/
+            fi
+          '';
+      }
+      // (depOverride.${manifest.name} or {}));
 in {
   inherit mkLakeDerivation mkPackage;
 }
