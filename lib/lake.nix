@@ -74,6 +74,8 @@
     staticLibDeps ? [],
     # Override derivation args in dependencies
     depOverride ? {},
+    # Override derivation entirely in dependencies
+    depOverrideDeriv ? {},
     ...
   }: let
     manifest = importLakeManifest manifestFile;
@@ -100,16 +102,19 @@
     # Build all dependencies
     manifestDeps = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
-        value = mkLakeDerivation ({
-            inherit (info) name url;
-            src = depSources.${info.name};
-            deps = builtins.listToAttrs (builtins.map (name: {
-                inherit name;
-                value = manifestDeps.${name};
-              })
-              flatDeps.${info.name});
-          }
-          // (depOverride.${info.name} or {}));
+        value =
+          depOverrideDeriv.${
+            info.name
+          } or (mkLakeDerivation ({
+              inherit (info) name url;
+              src = depSources.${info.name};
+              deps = builtins.listToAttrs (builtins.map (name: {
+                  inherit name;
+                  value = manifestDeps.${name};
+                })
+                flatDeps.${info.name});
+            }
+            // (depOverride.${info.name} or {})));
       })
       manifest.packages);
   in
