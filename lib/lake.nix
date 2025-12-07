@@ -42,17 +42,23 @@
         buildInputs = [lean.lean-all];
 
         configurePhase = ''
+          runHook preConfigure
           rm lake-manifest.json
           ln -s ${replaceManifest} lake-manifest.json
+          runHook postConfigure
         '';
 
         buildPhase = ''
+          runHook preBuild
           lake build
+          runHook postBuild
         '';
         installPhase = ''
+          runHook preInstall
           mkdir -p $out/
           mv * $out/
           mv .lake $out/
+          runHook postInstall
         '';
       }
       // (builtins.removeAttrs args ["deps"])
@@ -119,11 +125,14 @@
         buildPhase =
           args.buildPhase
           or ''
+            runHook preBuild
             lake build #${builtins.concatStringsSep " " roots}
+            runHook postBuild
           '';
         installPhase =
           args.installPhase
           or ''
+            runHook preInstall
             mkdir $out
             if [ -d .lake/build/bin ]; then
               mv .lake/build/bin $out/
@@ -131,6 +140,7 @@
             if [ -d .lake/build/lib ]; then
               mv .lake/build/lib $out/
             fi
+            runHook postInstall
           '';
       }
       // (depOverride.${manifest.name} or {}));
