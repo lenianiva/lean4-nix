@@ -152,7 +152,7 @@ Update the template `lean-toolchain` files when new Lean versions come out. When
 a new version is released, execute
 
 ``` sh
-toolchain fetch $VERSION [$VERSION_TAG]
+nix run .#toolchain-fetch $VERSION [$VERSION_TAG]
 ```
 
 to generate new toolchain hashes. Supply `$VERSION_TAG` to address any version
