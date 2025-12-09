@@ -117,11 +117,28 @@
             // (depOverride.${info.name} or {})));
       })
       manifest.packages);
+
+    # Get the local dependency paths which will be copied into the build directory
+    localDeps =
+      builtins.mapAttrs (name: value: "./pkgs/${name}") manifestDeps;
+
+    # Copy all dependency source into build directory, like `.lake/packages` but in `pkgs` instead
+    copyDeps =
+      builtins.concatStringsSep "\n"
+      (lib.mapAttrsToList (
+          name: value: ''
+            mkdir -p ./pkgs/${name}
+            cp -r ${value.outPath}/* ./pkgs/${name}''
+        )
+        manifestDeps);
   in
     mkLakeDerivation ({
         inherit name src;
-        deps = manifestDeps;
+        # Write the local `./pkgs/${name}` paths to the top-level manifest file
+        deps = localDeps;
         nativeBuildInputs = staticLibDeps;
+        # Copy each package from the Nix store to the build directory
+        postConfigure = copyDeps;
         buildPhase =
           args.buildPhase
           or ''
