@@ -17,6 +17,7 @@
   mkLakeDerivation = args @ {
     src,
     deps ? {},
+    extraConfigure ? "",
     ...
   }: let
     manifest = importLakeManifest "${src}/lake-manifest.json";
@@ -44,6 +45,7 @@
           runHook preConfigure
           rm lake-manifest.json
           ln -s ${replaceManifest} lake-manifest.json
+          ${extraConfigure}
           runHook postConfigure
         '';
 
@@ -138,7 +140,7 @@
         deps = localDeps;
         nativeBuildInputs = staticLibDeps;
         # Copy each package from the Nix store to the build directory
-        postConfigure = copyDeps;
+        extraConfigure = copyDeps;
         buildPhase =
           args.buildPhase
           or ''
