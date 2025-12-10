@@ -51,6 +51,7 @@
         buildPhase = ''
           runHook preBuild
           lake build
+          lake build ${capitalize name}:shared
           lake build ${capitalize name}:static
           runHook postBuild
         '';
