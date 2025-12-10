@@ -36,7 +36,6 @@
           })
           manifest.packages)
       );
-    buildTarget = capitalize name;
   in
     stdenv.mkDerivation (
       {
@@ -51,7 +50,9 @@
 
         buildPhase = ''
           runHook preBuild
-          lake build ${buildTarget}:shared
+          lake build
+          lake build ${capitalize name}:shared
+          lake build ${capitalize name}:static
           runHook postBuild
         '';
         installPhase = ''
