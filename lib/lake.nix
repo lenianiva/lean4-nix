@@ -51,6 +51,7 @@
         buildPhase = ''
           runHook preBuild
           lake build
+          lake build ${name}:static
           runHook postBuild
         '';
         installPhase = ''
