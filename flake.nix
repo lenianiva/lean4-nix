@@ -54,9 +54,10 @@
           lean-bin = pkgs-bin.lean;
           inherit (pkgs) lean;
           inherit (pkgs.lean) cacheRoots;
+          inherit (pkgs.callPackage ./lib/toolchain.nix {}) toolchain-fetch;
         };
         devShells.default = pkgs.mkShell {
-          buildInputs = [pkgs.pre-commit (pkgs.callPackage ./lib/toolchain.nix {}).toolchain-fetch];
+          buildInputs = [pkgs.pre-commit];
         };
 
         checks = (import ./checks.nix) {inherit pkgs-bin lake2nix-bin pkgs;};
