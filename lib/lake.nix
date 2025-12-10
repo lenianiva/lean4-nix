@@ -15,9 +15,9 @@
     lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
   # A wrapper around `mkDerivation` which sets up the lake manifest
   mkLakeDerivation = args @ {
+    name,
     src,
     deps ? {},
-    extraConfigure ? "",
     ...
   }: let
     manifest = importLakeManifest "${src}/lake-manifest.json";
@@ -36,6 +36,7 @@
           })
           manifest.packages)
       );
+    buildTarget = capitalize name;
   in
     stdenv.mkDerivation (
       {
@@ -45,13 +46,12 @@
           runHook preConfigure
           rm lake-manifest.json
           ln -s ${replaceManifest} lake-manifest.json
-          ${extraConfigure}
           runHook postConfigure
         '';
 
         buildPhase = ''
           runHook preBuild
-          lake build
+          lake build ${buildTarget}:shared
           runHook postBuild
         '';
         installPhase = ''
@@ -119,28 +119,11 @@
             // (depOverride.${info.name} or {})));
       })
       manifest.packages);
-
-    # Get the local dependency paths which will be copied into the build directory
-    localDeps =
-      builtins.mapAttrs (name: value: "./pkgs/${name}") manifestDeps;
-
-    # Copy all dependency source into build directory, like `.lake/packages` but in `pkgs` instead
-    copyDeps =
-      builtins.concatStringsSep "\n"
-      (lib.mapAttrsToList (
-          name: value: ''
-            mkdir -p ./pkgs/${name}
-            cp -r ${value.outPath}/* ./pkgs/${name}''
-        )
-        manifestDeps);
   in
     mkLakeDerivation ({
         inherit name src;
-        # Write the local `./pkgs/${name}` paths to the top-level manifest file
-        deps = localDeps;
+        deps = manifestDeps;
         nativeBuildInputs = staticLibDeps;
-        # Copy each package from the Nix store to the build directory
-        extraConfigure = copyDeps;
         buildPhase =
           args.buildPhase
           or ''
