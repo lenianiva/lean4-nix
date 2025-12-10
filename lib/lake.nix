@@ -36,6 +36,7 @@
           })
           manifest.packages)
       );
+    buildTarget = capitalize name;
   in
     stdenv.mkDerivation (
       {
@@ -50,7 +51,7 @@
 
         buildPhase = ''
           runHook preBuild
-          lake build
+          lake build ${buildTarget}:shared
           runHook postBuild
         '';
         installPhase = ''
@@ -65,22 +66,21 @@
     );
   # Builds a Lean package by reading the manifest file.
   mkPackage = args @ {
+    # Name of the build target, must be defined in `lakefile.lean`
+    name,
     # Path to the source
     src,
     # Path to the `lake-manifest.json` file
     manifestFile ? "${src}/lake-manifest.json",
-    # Root module
-    roots ? null,
     # Static library dependencies
     staticLibDeps ? [],
     # Override derivation args in dependencies
     depOverride ? {},
+    # Override derivation entirely in dependencies
+    depOverrideDeriv ? {},
     ...
   }: let
     manifest = importLakeManifest manifestFile;
-
-    roots =
-      args.roots or [(capitalize manifest.name)];
 
     depSources = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
@@ -104,29 +104,31 @@
     # Build all dependencies
     manifestDeps = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
-        value = mkLakeDerivation ({
-            inherit (info) name url;
-            src = depSources.${info.name};
-            deps = builtins.listToAttrs (builtins.map (name: {
-                inherit name;
-                value = manifestDeps.${name};
-              })
-              flatDeps.${info.name});
-          }
-          // (depOverride.${info.name} or {}));
+        value =
+          depOverrideDeriv.${
+            info.name
+          } or (mkLakeDerivation ({
+              inherit (info) name url;
+              src = depSources.${info.name};
+              deps = builtins.listToAttrs (builtins.map (name: {
+                  inherit name;
+                  value = manifestDeps.${name};
+                })
+                flatDeps.${info.name});
+            }
+            // (depOverride.${info.name} or {})));
       })
       manifest.packages);
   in
     mkLakeDerivation ({
-        inherit src;
-        inherit (manifest) name;
+        inherit name src;
         deps = manifestDeps;
         nativeBuildInputs = staticLibDeps;
         buildPhase =
           args.buildPhase
           or ''
             runHook preBuild
-            lake build #${builtins.concatStringsSep " " roots}
+            lake build ${name}
             runHook postBuild
           '';
         installPhase =
