@@ -123,7 +123,12 @@
               mkdir -p $out
               ${leanc}/bin/leanc -shared ${args} -o $out/$libName
             '';
-          depRoot = name: deps:
+          depRoot = name: deps: let
+            ln =
+              if stdenv.isDarwin
+              then "cp -dru"
+              else "cp -drsu";
+          in
             mkBareDerivation {
               name = "${name}-depRoot";
               inherit deps;
@@ -133,10 +138,10 @@
               buildCommand = ''
                 mkdir -p $out
                 for i in $(cat $depRootsPath); do
-                  cp -drsu --no-preserve=mode $i/. $out
+                  ${ln} --no-preserve=mode $i/. $out
                 done
                 for i in $(cat $depsPath); do
-                  cp -drsu --no-preserve=mode $i/. $out
+                  ${ln} --no-preserve=mode $i/. $out
                 done
               '';
             };
