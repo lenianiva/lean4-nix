@@ -43,8 +43,10 @@
 
         configurePhase = ''
           runHook preConfigure
-          rm lake-manifest.json
-          ln -s ${replaceManifest} lake-manifest.json
+          mkdir -p .lake
+          if [ ! -e .lake/package-overrides.json ]; then
+            ln -s ${replaceManifest} .lake/package-overrides.json
+          fi
           runHook postConfigure
         '';
 
@@ -55,6 +57,7 @@
           lake build ${capitalize name}:static
           runHook postBuild
         '';
+
         installPhase = ''
           runHook preInstall
           mkdir -p $out/
@@ -63,18 +66,14 @@
           runHook postInstall
         '';
       }
-      // (builtins.removeAttrs args ["deps"])
+      // (builtins.removeAttrs args ["deps" "depOverride" "depOverrideDeriv" "lakeDeps" "lakeArtifacts"])
     );
-  # Builds a Lean package by reading the manifest file.
-  mkPackage = args @ {
-    # Name of the build target, must be defined in `lakefile.lean`
-    name,
+
+  buildDeps = {
     # Path to the source
     src,
     # Path to the `lake-manifest.json` file
     manifestFile ? "${src}/lake-manifest.json",
-    # Static library dependencies
-    staticLibDeps ? [],
     # Override derivation args in dependencies
     depOverride ? {},
     # Override derivation entirely in dependencies
@@ -91,6 +90,7 @@
         };
       })
       manifest.packages);
+
     # construct dependency name map
     flatDeps =
       lib.mapAttrs (
@@ -121,32 +121,80 @@
       })
       manifest.packages);
   in
-    mkLakeDerivation ({
-        inherit name src;
-        deps = manifestDeps;
+    manifestDeps;
+
+  # Builds a Lean package by reading the manifest file.
+  # Other possible arguments are `lakeDeps` and `lakeArtifacts`
+  # `depOverride` and `depOverrideDeriv` can also be passed through to `buildDeps`, but are overriden by `lakeDeps`
+  # Also, any input phase hooks will get passed through to `mkDerivation`
+  mkPackage = args @ {
+    # Name of the build target, must be defined in `lakefile.lean`
+    name,
+    # Path to the source
+    src,
+    # Static library dependencies
+    staticLibDeps ? [],
+    # Export `.lake` artifacts for reuse
+    installArtifacts ? true,
+    ...
+  }: let
+    deps = args.lakeDeps or (buildDeps (builtins.removeAttrs args ["name"]));
+  in
+    mkLakeDerivation (args
+      // {
+        inherit name src deps;
         nativeBuildInputs = staticLibDeps;
-        buildPhase =
-          args.buildPhase
-          or ''
+
+        # TODO: Use zstd tarball instead of cp
+        # https://github.com/ipetkov/crane/blob/master/lib/setupHooks/inheritCargoArtifactsHook.sh#L28
+        patchPhase =
+          args.patchPhase or (
+            if args ? lakeArtifacts
+            then ''
+              cp -R ${args.lakeArtifacts.outPath}/.lake .
+              chmod -R +w .lake
+            ''
+            else ""
+          );
+
+        buildPhase = args.buildPhase or lib.concatStringsSep "\n" [
+          ''
             runHook preBuild
             lake build ${name}
-            runHook postBuild
-          '';
-        installPhase =
-          args.installPhase
-          or ''
+          ''
+          (
+            if installArtifacts
+            then ''
+              lake build ${name}:shared
+              lake build ${name}:static
+            ''
+            else ""
+          )
+          "runHook postBuild"
+        ];
+
+        installPhase = args.installPhase
+          or lib.concatStringsSep "\n" [
+          ''
             runHook preInstall
-            mkdir $out
+            mkdir -p $out
             if [ -d .lake/build/bin ]; then
-              mv .lake/build/bin $out/
+              cp -R .lake/build/bin $out
             fi
-            if [ -d .lake/build/lib ]; then
-              mv .lake/build/lib $out/
-            fi
-            runHook postInstall
-          '';
-      }
-      // (depOverride.${manifest.name} or {}));
+          ''
+          (
+            # TODO: Compress into zstd tarball instead of mv
+            # https://github.com/ipetkov/crane/blob/master/lib/setupHooks/installCargoArtifactsHook.sh#L39
+            if installArtifacts
+            then ''
+              mv * $out
+              mv .lake $out
+            ''
+            else ""
+          )
+          "runHook postInstall"
+        ];
+      });
 in {
-  inherit mkLakeDerivation mkPackage;
+  inherit mkLakeDerivation buildDeps mkPackage;
 }
