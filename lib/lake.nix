@@ -149,15 +149,18 @@
 
         # TODO: Use zstd tarball instead of cp
         # https://github.com/ipetkov/crane/blob/master/lib/setupHooks/inheritCargoArtifactsHook.sh#L28
-        patchPhase =
-          args.patchPhase or (
+        patchPhase = args.patchPhase or lib.concatStringsSep "\n" [
+          "runHook prePatch"
+          (
             if args ? lakeArtifacts
             then ''
               cp -R ${args.lakeArtifacts.outPath}/.lake .
               chmod -R +w .lake
             ''
             else ""
-          );
+          )
+          "runHook postPatch"
+        ];
 
         buildPhase = args.buildPhase or lib.concatStringsSep "\n" [
           ''
