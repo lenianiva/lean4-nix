@@ -134,6 +134,8 @@
     src,
     # Static library dependencies
     staticLibDeps ? [],
+    # Build `shared` and `static` facets of a library target
+    buildLibrary ? false,
     # Export `.lake` artifacts for reuse
     installArtifacts ? true,
     ...
@@ -163,7 +165,7 @@
             lake build ${name}
           ''
           (
-            if installArtifacts
+            if buildLibrary
             then ''
               lake build ${name}:shared
               lake build ${name}:static
