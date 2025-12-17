@@ -155,6 +155,12 @@ The Lean version is not listed in the `manifests/` directory. Use `readRev` or
 
 ## Development
 
+Use the provided pre-commit config:
+
+``` sh
+prek install
+```
+
 Use `nix flake check` to check the template builds.
 
 Update the template `lean-toolchain` files when new Lean versions come out. When

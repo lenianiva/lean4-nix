@@ -1,4 +1,6 @@
 .*
 !.gitignore
+!.pre-commit-config.yaml
+
 **/result
 templates/**/flake.lock
