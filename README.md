@@ -28,6 +28,8 @@ fetch dependencies automatically.
 nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 ```
 
+The `.#incremental` template shows an example of incremental builds.
+
 ## Caching
 
 This project has CI by Garnix and uses
