@@ -57,7 +57,7 @@
           inherit (pkgs.callPackage ./lib/toolchain.nix {}) toolchain-fetch;
         };
         devShells.default = pkgs.mkShell {
-          buildInputs = [pkgs.pre-commit];
+          buildInputs = [pkgs.prek];
         };
 
         checks = (import ./checks.nix) {inherit pkgs-bin lake2nix-bin pkgs;};

@@ -7,9 +7,9 @@ Nix flake build for Lean 4.
 Features:
 
 - Build Lean with Nix
-- Build Lake projects (with executables and libraries) with Nix
-- Lean overlay
-- Automatically read toolchain version
+- Lean overlay from versions or toolchain files
+- Build Lake projects (with executables, libraries, and facets) incrementally
+  with Nix
 - Convert `lake-manifest.json` into Nix dependencies
 
 ## Example
@@ -27,6 +27,8 @@ fetch dependencies automatically.
 ``` sh
 nix flake new --template github:lenianiva/lean4-nix#dependency ./dependency
 ```
+
+The `.#incremental` template shows an example of incremental builds.
 
 ## Caching
 
@@ -115,21 +117,26 @@ This is a form of manual dependency management.
 
 Use `lake2nix = pkgs.callPackage lean4-nix.lake {}` to generate the lake utilities.
 
-`lake2nix.buildDeps { ... }` automatically reads the `lake-manifest.json` file and builds its dependencies using `lake build`. The output is an attr set of derivations for each dependency. It takes the following arguments:
+`lake2nix.buildDeps { ... }` automatically reads the `lake-manifest.json` file
+and builds its dependencies using `lake build`. The output is an attr set of
+derivations for each dependency. It takes the following arguments:
 
 - `src`: The source directory
 - `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file
-- `depOverride ? {}`: Attr set of any custom arguments to use when building a given dependency, such as `buildPhase` or `preConfigure`.
+- `depOverride ? {}`: Attr set of any custom arguments to use when building a
+  given dependency, such as `buildPhase` or `preConfigure`.
 - `depOverrideDeriv ? {}`: Attr set of derivations to use instead of building dependencies
 
-`lake2nix.mkPackage { ... }` builds the given build target of the Lake project using `lake build`, optionally with the dependencies built by `buildDeps`. The output is a derivation. It takes the following arguments:
+`lake2nix.mkPackage { ... }` builds the given build target of the Lake project
+using `lake build`, optionally with the dependencies built by `buildDeps`. The
+output is a derivation. It takes the following arguments:
 
 - `name`: The name of the desired target to build
-- `src`: The source directory
-  name from `manifestFile`
+- `src`: The source directory name from `manifestFile`
 - `staticLibDeps ? []`: List of static libraries to link with.
 - `lakeDeps`: If provided, use these dependencies instead of calling `buildDeps` internally
-- `lakeArtifacts`: If provided, copy the `.lake` artifacts from another derivation for incremental builds
+- `lakeArtifacts`: If provided, copy the `.lake` artifacts from another
+  derivation for incremental builds
 - `buildLibrary ? false`: Whether to build library facets for the `name` build target
 - `installArtifacts ? true`: Whether to export `.lake` artifacts and source in the derivation `outPath` for incremental builds
 - `configurePhase`: If provided, override the configure phase
@@ -154,6 +161,12 @@ The Lean version is not listed in the `manifests/` directory. Use `readRev` or
 `readFromGit` instead.
 
 ## Development
+
+Use the provided pre-commit config:
+
+``` sh
+prek install
+```
 
 Use `nix flake check` to check the template builds.
 
