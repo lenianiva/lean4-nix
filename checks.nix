@@ -22,6 +22,24 @@
       name = "Example";
       src = lib.cleanSource ./templates/dependency;
     };
+    incremental-deps = lake2nix.buildDeps {
+      src = lib.cleanSource ./templates/incremental;
+    };
+    incremental-args = {
+      lakeDeps = incremental-deps;
+      src = lib.cleanSource ./templates/incremental;
+    };
+    incremental-lib = lake2nix.mkPackage (incremental-args
+      // {
+        name = "Example";
+        buildLibrary = true;
+      });
+    incremental-test = lake2nix.mkPackage (incremental-args
+      // {
+        name = "ExampleTest";
+        lakeArtifacts = incremental-lib;
+        installArtifacts = false;
+      });
   in
     lib.mapAttrs' (name: value: lib.nameValuePair "${prefix}${name}" value)
     rec {
@@ -67,7 +85,7 @@
           hakkero.succeed("example")
         '';
       });
-      inherit dependency-manifest;
+      inherit dependency-manifest incremental-lib incremental-test;
     };
   lake2nix = pkgs.callPackage lib/lake.nix {};
 in
