@@ -7,10 +7,10 @@ Nix flake build for Lean 4.
 Features:
 
 - Build Lean with Nix
-- Build Lean Projects (with executables and libraries) with Nix
+- Build Lake projects (with executables and libraries) with Nix
 - Lean overlay
 - Automatically read toolchain version
-- Convert `lake-manifest.json` into Lean build
+- Convert `lake-manifest.json` into Nix dependencies
 
 ## Example
 
@@ -54,7 +54,7 @@ directory.
 The user must decide on a Lean version to use as overlay. The Lean version from
 `nixpkgs` will likely not work of the box. The minimal supported version is
 `v4.11.0`, since it is the version when Lean's official Nix flake was
-deprecated. From version `v4.22.0` onwards, the each Lean build must have both
+deprecated. From version `v4.22.0` onwards, each Lean build must have both
 `bootstrap` and `buildLeanPackage` functions. There are a couple of ways to get
 an overlay.  Each corresponds to a flake output. Below is a list ranked from the
 easiest to the hardest to use:
@@ -115,22 +115,31 @@ This is a form of manual dependency management.
 
 Use `lake2nix = pkgs.callPackage lean4-nix.lake {}` to generate the lake utilities.
 
-`lake2nix.mkPackage { ... }` automatically reads the `lake-manifest.json` file
-and builds its dependencies. The output is a derivation. It takes the following
-arguments:
+`lake2nix.buildDeps { ... }` automatically reads the `lake-manifest.json` file and builds its dependencies using `lake build`. The output is an attr set of derivations for each dependency. It takes the following arguments:
 
 - `src`: The source directory
-- `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file.
-- `roots`: Lean modules at the root of the import tree. Defaults to the project
+- `manifestFile ? ${src}/lake-manifest.json`: Path to the manifest file
+- `depOverride ? {}`: Attr set of any custom arguments to use when building a given dependency, such as `buildPhase` or `preConfigure`.
+- `depOverrideDeriv ? {}`: Attr set of derivations to use instead of building dependencies
+
+`lake2nix.mkPackage { ... }` builds the given build target of the Lake project using `lake build`, optionally with the dependencies built by `buildDeps`. The output is a derivation. It takes the following arguments:
+
+- `name`: The name of the desired target to build
+- `src`: The source directory
   name from `manifestFile`
 - `staticLibDeps ? []`: List of static libraries to link with.
-- `buildPhase`: If provided, override the build phase command (useful for
-  building library facets and unit tests)
+- `lakeDeps`: If provided, use these dependencies instead of calling `buildDeps` internally
+- `lakeArtifacts`: If provided, copy the `.lake` artifacts from another derivation for incremental builds
+- `buildLibrary ? false`: Whether to build library facets for the `name` build target
+- `installArtifacts ? true`: Whether to export `.lake` artifacts and source in the derivation `outPath` for incremental builds
+- `configurePhase`: If provided, override the configure phase
+- `buildPhase`: If provided, override the build phase
 - `installPhase`: If provided, override the install phase
+
 
 ### `buildLeanPackage`
 
-The `buildLeanPackage` and `mkPackage` functions output the built Lean package
+The `buildLeanPackage` function output the built Lean package
 in a non-derivation format. Generally, the attributes available are:
 - `executable`: Executable
 - `sharedLib`: Shared library
