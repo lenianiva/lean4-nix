@@ -21,7 +21,9 @@
     src,
     # Attr set of the Lake package's dependency derivations
     deps ? {},
+    # Whether to build `shared` and `static` facets of a library target, and elaborate lakefile.lean into `.lake/config/<pkgName>` if applicable.
     buildLibrary ? false,
+    # Whether to export `.lake` artifacts and source for incremental builds
     installArtifacts ? true,
     ...
   }: let
@@ -40,6 +42,7 @@
         manifest.packages)
     );
     replaceManifestJson = pkgs.writers.writeJSON "lake-manifest.json" replaceManifest;
+    # Creates a manifest for a downstream project that imports the library, which will be built alongside it in the build phase. This is needed because in Lean 4.26.0+ Lake re-elaborates the lakefile as `.lake/config/<pkgName>` when a library is imported, and any writes to `.lake` must happen before the build completes and the dependency path is imported as a read-only Nix store path.
     replaceManifestImportJson =
       pkgs.writers.writeJSON "lake-manifest.json"
       (
@@ -61,6 +64,7 @@
           name = "${name}Import";
         }
       );
+    # Creates the import project's lakefile. Note we can't use `lake new` because it uses Git
     lakefile-import = pkgs.writeText "lakefile.toml" ''
       name = "${name}Import"
       version = "0.1.0"
@@ -74,6 +78,7 @@
       name = "${name}-import"
       root = "Main"
     '';
+    # Creates the import project's `Main.lean`
     main-import = pkgs.writeText "Main.lean" ''
       import ${name}
       def main : IO Unit := IO.println s!"Hello, world!"
@@ -83,6 +88,7 @@
       {
         buildInputs = [pkgs.rsync lean.lean-all];
 
+        # If building a library with a `lakefile.lean`, create a wrapper project that imports the library.
         patchPhase = ''
           runHook prePatch
           ${lib.optionalString buildLibrary ''
@@ -107,8 +113,8 @@
           runHook postConfigure
         '';
 
-        # Builds the default facets of the Lake package as well as the shared and static facets of the `name` library.
-        # Building the `shared` and `static` facets generates the library's `.export` files for use as a dependency, which allows its Nix path to be read-only
+        # Builds the default facets of the Lake package as well as the shared and static facets of the `name` library. Building the `shared` and `static` facets generates the library's `.export` files for use as a dependency, which allows its Nix path to be read-only
+        # Also builds the library's import project from `patchPhase` if applicable
         # NOTE: We assume most projects have the same name for the package and default library, where the latter is capitalized (e.g. `aesop` and `Aesop`, `batteries` and `Batteries`). If this is not the case, the user can provide their own `buildPhase` either in a `depOverride` for `buildDeps` or directly as an argument to in `mkPackage`. If there are multiple libraries used from the package, the user can provide a `preBuild` or `postBuild` hook to build the requisite `shared`/`staic` facets
         buildPhase = ''
           runHook preBuild
@@ -125,7 +131,7 @@
           runHook postBuild
         '';
 
-        # Copies the source and `.lake` artifacts to the out path for later reuse as dependencies, respecting `.gitignore
+        # Copies the source and `.lake` artifacts to the out path for later reuse as dependencies, respecting `.gitignore`
         # TODO: Compress into zstd tarball instead of rsync/cp
         # https://github.com/ipetkov/crane/blob/master/lib/setupHooks/installCargoArtifactsHook.sh#L39
         installPhase = ''
@@ -199,7 +205,7 @@
   in
     manifestDeps;
 
-  # Builds a given target of a Lake package with `lake build`, building dependencies first if necessary
+  # Builds a given target of a Lake package with `lake build`, building any dependencies first and importing them via their Nix store paths
   #
   # Optional/implicit arguments:
   # - `lakeDeps` takes an attr set of dependency derivations built by `buildDeps`. If not specified, `mkPackage` will call `buildDeps` anyway.
