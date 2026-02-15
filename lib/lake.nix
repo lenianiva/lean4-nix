@@ -54,7 +54,7 @@
               {
                 type = "path";
                 scope = "";
-                name = replaceManifest.name;
+                name = name;
                 manifestFile = "lake-manifest.json";
                 inherited = false;
                 dir = "..";
@@ -71,7 +71,7 @@
       defaultTargets = ["${name}-import"]
 
       [[require]]
-      name = "${replaceManifest.name}"
+      name = "${name}"
       path = ".."
 
       [[lean_exe]]
