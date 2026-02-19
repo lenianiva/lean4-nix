@@ -28,7 +28,10 @@
     ...
   }: let
     manifest = importLakeManifest "${src}/lake-manifest.json";
-    # Creates a surrogate manifest with paths to the Nix store
+    # Creates a surrogate manifest with paths to local shadow directories.
+    # These shadow directories symlink most files from the Nix store but have
+    # writable .lake/config/ directories (needed because Lake may try to
+    # re-elaborate lakefile configs when pkgIdx doesn't match the cached trace).
     replaceManifest = (
       lib.setAttr manifest "packages" (builtins.map ({
           name,
@@ -37,19 +40,19 @@
         }: {
           inherit name inherited;
           type = "path";
-          dir = deps.${name};
+          dir = ".lake/packages/${name}";
         })
         manifest.packages)
     );
     replaceManifestJson = pkgs.writers.writeJSON "lake-manifest.json" replaceManifest;
-    # Creates a manifest for a downstream project that imports the library, which will be built alongside it in the build phase. This is needed because in Lean 4.26.0+ Lake re-elaborates the lakefile as `.lake/config/<pkgName>` when a library is imported, and any writes to `.lake` must happen before the build completes and the dependency path is imported as a read-only Nix store path.
+    # Creates a manifest for the import project (in subdirectory, so paths need ../)
     replaceManifestImportJson =
       pkgs.writers.writeJSON "lake-manifest.json"
       (
         replaceManifest
         // {
           packages =
-            replaceManifest.packages
+            (builtins.map (pkg: pkg // {dir = "../${pkg.dir}";}) replaceManifest.packages)
             ++ [
               {
                 type = "path";
@@ -103,10 +106,21 @@
           runHook postPatch
         '';
 
-        # Overrides the `lake-manifest.json` Git source with path dependencies which are written to `.lake/package-overrides.json` and automatically picked up by Lake
+        # Creates shadow directories for dependencies: symlinks to Nix store with
+        # writable .lake/config/ (Lake needs to write lockfiles when re-elaborating).
         configurePhase = ''
           runHook preConfigure
-          mkdir -p .lake
+          mkdir -p .lake/packages
+          ${lib.concatStringsSep "\n" (lib.mapAttrsToList (depName: depPath: ''
+              cp -rs "${depPath}" ".lake/packages/${depName}"
+              chmod -R +w ".lake/packages/${depName}"
+              if [ -d "${depPath}/.lake/config" ]; then
+                rm -rf ".lake/packages/${depName}/.lake/config"
+                cp -r "${depPath}/.lake/config" ".lake/packages/${depName}/.lake/"
+                chmod -R +w ".lake/packages/${depName}/.lake/config"
+              fi
+            '')
+            deps)}
           if [ ! -e .lake/package-overrides.json ]; then
             ln -s ${replaceManifestJson} .lake/package-overrides.json
           fi
