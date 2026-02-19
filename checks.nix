@@ -40,6 +40,19 @@
         lakeArtifacts = incremental-lib;
         installArtifacts = false;
       });
+    lean-import-deps = lake2nix.buildDeps {
+      src = lib.cleanSource ./templates/lean-import;
+      # Override with up to date `incremental` dep
+      depOverrideDeriv = {
+        Example = incremental-lib;
+      };
+    };
+    lean-import-bin = lake2nix.mkPackage {
+      name = "leanImport";
+      src = lib.cleanSource ./templates/lean-import;
+      lakeDeps = lean-import-deps;
+      installArtifacts = false;
+    };
   in
     lib.mapAttrs' (name: value: lib.nameValuePair "${prefix}${name}" value)
     rec {
@@ -85,7 +98,7 @@
           hakkero.succeed("example")
         '';
       });
-      inherit dependency-manifest incremental-lib incremental-test;
+      inherit dependency-manifest incremental-lib incremental-test lean-import-bin;
     };
   lake2nix = pkgs.callPackage lib/lake.nix {};
 in

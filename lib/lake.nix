@@ -176,13 +176,17 @@
   }: let
     manifest = importLakeManifest manifestFile;
 
-    # Fetches the Git source of each dependency in the manifest
+    # Fetches the Git source of each dependency in the manifest, accounting for subDir
     depSources = builtins.listToAttrs (builtins.map (info: {
         inherit (info) name;
-        value = builtins.fetchGit {
-          inherit (info) url rev;
-          shallow = true;
-        };
+        value = let
+          repo = builtins.fetchGit {
+            inherit (info) url rev;
+            shallow = true;
+          };
+          subDir = info.subDir or null;
+        in
+          if subDir != null then "${repo}/${subDir}" else repo;
       })
       manifest.packages);
 
