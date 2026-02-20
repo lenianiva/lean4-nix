@@ -30,8 +30,7 @@
     manifest = importLakeManifest "${src}/lake-manifest.json";
     # Creates a surrogate manifest with paths to local shadow directories.
     # These shadow directories symlink most files from the Nix store but have
-    # writable .lake/config/ directories (needed because Lake may try to
-    # re-elaborate lakefile configs when pkgIdx doesn't match the cached trace).
+    # writable `.lake/config/` directories so that Lake can regenerate `.lock` files at build time
     replaceManifest = (
       lib.setAttr manifest "packages" (builtins.map ({
           name,
@@ -51,7 +50,7 @@
         buildInputs = [pkgs.rsync lean.lean-all];
 
         # Creates shadow directories for dependencies: symlinks to Nix store with
-        # writable .lake/ (Lake needs to create .lake/config/<depName>/ when elaborating).
+        # writable `.lake/` (Lake needs to create `.lake/config/<depName>/` when elaborating).
         configurePhase = ''
           runHook preConfigure
           mkdir -p .lake/packages
@@ -70,7 +69,7 @@
         '';
 
         # Builds the default facets of the Lake package as well as the shared and static facets of the `name` library. Building the `shared` and `static` facets generates the library's `.export` files for use as a dependency, which allows its Nix path to be read-only
-        # NOTE: We assume most projects have the same name for the package and default library, where the latter is capitalized (e.g. `aesop` and `Aesop`, `batteries` and `Batteries`). If this is not the case, the user can provide their own `buildPhase` either in a `depOverride` for `buildDeps` or directly as an argument to in `mkPackage`. If there are multiple libraries used from the package, the user can provide a `preBuild` or `postBuild` hook to build the requisite `shared`/`staic` facets
+        # NOTE: We assume most projects have the same name for the package and default library, where the latter is capitalized (e.g. `aesop` and `Aesop`, `batteries` and `Batteries`). If this is not the case, the user can provide their own `buildPhase` either in a `depOverride` for `buildDeps` or directly as an argument to in `mkPackage`. If there are multiple libraries used from the package, the user can provide a `preBuild` or `postBuild` hook to build the requisite `shared`/`static` facets
         buildPhase = ''
           runHook preBuild
           lake build ${name}

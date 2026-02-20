@@ -4,8 +4,7 @@
   inputs = {
     nixpkgs.follows = "lean4-nix/nixpkgs";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    #lean4-nix.url = "github:lenianiva/lean4-nix";
-    lean4-nix.url = "path:../..";
+    lean4-nix.url = "github:lenianiva/lean4-nix";
   };
 
   outputs = inputs @ {
