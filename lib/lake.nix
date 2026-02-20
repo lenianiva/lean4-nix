@@ -88,7 +88,7 @@
           runHook preInstall
           mkdir -p $out/
           ${lib.optionalString installArtifacts ''
-            rsync -a --filter=":- .gitignore" ./ "$out/"
+            rsync -a --exclude=".lake" --filter=":- .gitignore" ./ "$out/"
             cp -r .lake $out
           ''}
           runHook postInstall
