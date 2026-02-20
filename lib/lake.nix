@@ -21,7 +21,7 @@
     src,
     # Attr set of the Lake package's dependency derivations
     deps ? {},
-    # Whether to build `shared` and `static` facets of a library target, and elaborate lakefile.lean into `.lake/config/<pkgName>` if applicable.
+    # Whether to build `shared` and `static` facets of a library target.
     buildLibrary ? false,
     # Whether to export `.lake` artifacts and source for incremental builds
     installArtifacts ? true,
@@ -45,79 +45,21 @@
         manifest.packages)
     );
     replaceManifestJson = pkgs.writers.writeJSON "lake-manifest.json" replaceManifest;
-    # Creates a manifest for the import project (in subdirectory, so paths need ../)
-    replaceManifestImportJson =
-      pkgs.writers.writeJSON "lake-manifest.json"
-      (
-        replaceManifest
-        // {
-          packages =
-            (builtins.map (pkg: pkg // {dir = "../${pkg.dir}";}) replaceManifest.packages)
-            ++ [
-              {
-                type = "path";
-                scope = "";
-                name = name;
-                manifestFile = "lake-manifest.json";
-                inherited = false;
-                dir = "..";
-                configFile = "lakefile.lean";
-              }
-            ];
-          name = "${name}Import";
-        }
-      );
-    # Creates the import project's lakefile. Note we can't use `lake new` because it uses Git
-    lakefile-import = pkgs.writeText "lakefile.toml" ''
-      name = "${name}Import"
-      version = "0.1.0"
-      defaultTargets = ["${name}-import"]
-
-      [[require]]
-      name = "${name}"
-      path = ".."
-
-      [[lean_exe]]
-      name = "${name}-import"
-      root = "Main"
-    '';
-    # Creates the import project's `Main.lean`
-    main-import = pkgs.writeText "Main.lean" ''
-      import ${name}
-      def main : IO Unit := IO.println s!"Hello, world!"
-    '';
   in
     stdenv.mkDerivation (
       {
         buildInputs = [pkgs.rsync lean.lean-all];
 
-        # If building a library with a `lakefile.lean`, create a wrapper project that imports the library.
-        patchPhase = ''
-          runHook prePatch
-          ${lib.optionalString buildLibrary ''
-            if [ -e "lakefile.lean" ]; then
-              mkdir ${name}-import
-              ln -s ${main-import} ${name}-import/Main.lean
-              ln -s ${lakefile-import} ${name}-import/lakefile.toml
-              ln -s ${replaceManifestImportJson} ${name}-import/lake-manifest.json
-              cp lean-toolchain ${name}-import
-            fi
-          ''}
-          runHook postPatch
-        '';
-
         # Creates shadow directories for dependencies: symlinks to Nix store with
-        # writable .lake/config/ (Lake needs to write lockfiles when re-elaborating).
+        # writable .lake/ (Lake needs to create .lake/config/<depName>/ when elaborating).
         configurePhase = ''
           runHook preConfigure
           mkdir -p .lake/packages
           ${lib.concatStringsSep "\n" (lib.mapAttrsToList (depName: depPath: ''
               cp -rs "${depPath}" ".lake/packages/${depName}"
-              chmod -R +w ".lake/packages/${depName}"
-              if [ -d "${depPath}/.lake/config" ]; then
+              chmod -R +w ".lake/packages/${depName}/.lake"
+              if [ -d ".lake/packages/${depName}/.lake/config" ]; then
                 rm -rf ".lake/packages/${depName}/.lake/config"
-                cp -r "${depPath}/.lake/config" ".lake/packages/${depName}/.lake/"
-                chmod -R +w ".lake/packages/${depName}/.lake/config"
               fi
             '')
             deps)}
@@ -128,7 +70,6 @@
         '';
 
         # Builds the default facets of the Lake package as well as the shared and static facets of the `name` library. Building the `shared` and `static` facets generates the library's `.export` files for use as a dependency, which allows its Nix path to be read-only
-        # Also builds the library's import project from `patchPhase` if applicable
         # NOTE: We assume most projects have the same name for the package and default library, where the latter is capitalized (e.g. `aesop` and `Aesop`, `batteries` and `Batteries`). If this is not the case, the user can provide their own `buildPhase` either in a `depOverride` for `buildDeps` or directly as an argument to in `mkPackage`. If there are multiple libraries used from the package, the user can provide a `preBuild` or `postBuild` hook to build the requisite `shared`/`staic` facets
         buildPhase = ''
           runHook preBuild
@@ -136,11 +77,6 @@
           ${lib.optionalString buildLibrary ''
             lake build ${capitalize name}:shared
             lake build ${capitalize name}:static
-            if [ -e lakefile.lean ]; then
-              cd ${name}-import
-              lake build
-              cd ..
-            fi
           ''}
           runHook postBuild
         '';
@@ -152,7 +88,7 @@
           runHook preInstall
           mkdir -p $out/
           ${lib.optionalString installArtifacts ''
-            rsync -a --exclude="${name}-import" --filter=":- .gitignore" ./ "$out/"
+            rsync -a --filter=":- .gitignore" ./ "$out/"
             cp -r .lake $out
           ''}
           runHook postInstall
@@ -186,7 +122,9 @@
           };
           subDir = info.subDir or null;
         in
-          if subDir != null then "${repo}/${subDir}" else repo;
+          if subDir != null
+          then "${repo}/${subDir}"
+          else repo;
       })
       manifest.packages);
 
