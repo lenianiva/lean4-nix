@@ -36,17 +36,17 @@
           inherit lakeDeps;
           src = ./.;
         };
-        exampleLib = lake2nix.mkPackage (commonArgs
+        incLib = lake2nix.mkPackage (commonArgs
           // {
-            name = "Example";
+            name = "Incremental";
             # Build library facets ahead of time for use as a dependency
             buildLibrary = true;
           });
-        exampleTest = lake2nix.mkPackage (commonArgs
+        incTest = lake2nix.mkPackage (commonArgs
           // {
-            name = "ExampleTest";
+            name = "IncrementalTest";
             # Copy `.lake` artifacts from library derivation
-            lakeArtifacts = exampleLib;
+            lakeArtifacts = incLib;
             # Don't export source code or `.lake` artifacts, since a test won't be used as a dependency
             installArtifacts = false;
           });
@@ -57,8 +57,8 @@
         };
 
         packages = {
-          default = exampleLib;
-          test = exampleTest;
+          default = incLib;
+          test = incTest;
         };
 
         devShells.default = pkgs.mkShell {

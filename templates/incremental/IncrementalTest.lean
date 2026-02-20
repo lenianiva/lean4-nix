@@ -1,4 +1,4 @@
-import Example
+import Incremental
 
 def main := IO.println cirno
 
