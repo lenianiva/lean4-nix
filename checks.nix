@@ -36,12 +36,12 @@
     };
     incremental-lib = lake2nix.mkPackage (incremental-args
       // {
-        name = "Example";
+        name = "Incremental";
         buildLibrary = true;
       });
     incremental-test = lake2nix.mkPackage (incremental-args
       // {
-        name = "ExampleTest";
+        name = "IncrementalTest";
         lakeArtifacts = incremental-lib;
         installArtifacts = false;
       });

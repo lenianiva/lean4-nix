@@ -56,9 +56,10 @@
           mkdir -p .lake/packages
           ${lib.concatStringsSep "\n" (lib.mapAttrsToList (depName: depPath: ''
               cp -rs "${depPath}" ".lake/packages/${depName}"
-              chmod -R +w ".lake/packages/${depName}/.lake"
-              if [ -d ".lake/packages/${depName}/.lake/config" ]; then
-                rm -rf ".lake/packages/${depName}/.lake/config"
+              if [ -d "${depPath}/.lake/config" ]; then
+                chmod -R +w ".lake/packages/${depName}/.lake"
+                rm -rf ".lake/packages/${depName}/.lake"/*
+                cp -r --no-preserve=mode "${depPath}/.lake"/* ".lake/packages/${depName}/.lake/"
               fi
             '')
             deps)}

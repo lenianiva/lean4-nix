@@ -11,9 +11,5 @@ rec {
     path = ./incremental;
     description = "With Incremental builds";
   };
-  lean-import = {
-    path = ./lean-import;
-    description = "Import library with lakefile.lean";
-  };
   default = minimal;
 }
