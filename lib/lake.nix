@@ -29,8 +29,7 @@
   }: let
     manifest = importLakeManifest "${src}/lake-manifest.json";
     # Creates a surrogate manifest with paths to local shadow directories.
-    # These shadow directories symlink most files from the Nix store but have
-    # writable `.lake/config/` directories so that Lake can regenerate `.lock` files at build time
+    # These shadow directories symlink source files from the Nix store.
     replaceManifest = (
       lib.setAttr manifest "packages" (builtins.map ({
           name,
@@ -49,8 +48,10 @@
       {
         buildInputs = [pkgs.rsync lean.lean-all];
 
-        # Creates shadow directories for dependencies: symlinks to Nix store with
-        # writable `.lake/` (Lake needs to create `.lake/config/<depName>/` when elaborating).
+        # Creates shadow directories for dependencies: source files are symlinked
+        # from the Nix store. For `lakefile.lean` deps (detected by `.lake/config`
+        # existing), `.lake/` is replaced with real writable copies since Lake
+        # re-elaborates configs and may rebuild artifacts in a consumer workspace.
         configurePhase = ''
           runHook preConfigure
           mkdir -p .lake/packages
