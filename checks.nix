@@ -23,7 +23,7 @@
       src = lib.cleanSource ./templates/dependency;
       buildLibrary = true;
     };
-    incremental-deps = lake2nix.buildDeps {
+    incremental-deps = lake.buildDeps {
       src = lib.cleanSource ./templates/incremental;
       # Override with up to date `dependency` dep
       depOverrideDeriv = {
@@ -34,12 +34,12 @@
       lakeDeps = incremental-deps;
       src = lib.cleanSource ./templates/incremental;
     };
-    incremental-lib = lake2nix.mkPackage (incremental-args
+    incremental-lib = lake.mkPackage (incremental-args
       // {
         name = "Incremental";
         buildLibrary = true;
       });
-    incremental-test = lake2nix.mkPackage (incremental-args
+    incremental-test = lake.mkPackage (incremental-args
       // {
         name = "IncrementalTest";
         lakeArtifacts = incremental-lib;

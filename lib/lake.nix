@@ -60,7 +60,7 @@
               if [ -d "${depPath}/.lake/config" ]; then
                 chmod -R +w ".lake/packages/${depName}/.lake"
                 rm -rf ".lake/packages/${depName}/.lake"/*
-                cp -r --no-preserve=mode "${depPath}/.lake"/* ".lake/packages/${depName}/.lake/"
+                cp -rP --no-preserve=mode "${depPath}/.lake"/* ".lake/packages/${depName}/.lake/"
               fi
             '')
             deps)}
@@ -90,7 +90,7 @@
           mkdir -p $out/
           ${lib.optionalString installArtifacts ''
             rsync -a --exclude=".lake" --filter=":- .gitignore" ./ "$out/"
-            cp -r .lake $out
+            cp -rP .lake $out
           ''}
           runHook postInstall
         '';
