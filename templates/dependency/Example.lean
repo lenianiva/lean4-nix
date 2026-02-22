@@ -1,4 +1,6 @@
 import Aesop
 
-def main : IO Unit :=
-  IO.println "Cirno's Perfect Arithmetics Class has begun!"
+def cirno : String := "Cirno's Perfect Arithmetics Class has begun!"
+
+example : α → α :=
+  by aesop
