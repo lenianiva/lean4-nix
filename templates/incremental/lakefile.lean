@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 require batteries from git
-  "https://github.com/leanprover-community/batteries" @ "v4.27.0"
+  "https://github.com/leanprover-community/batteries" @ "v4.28.0"
 
 package Incremental
 
