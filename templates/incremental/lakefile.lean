@@ -1,9 +1,8 @@
 import Lake
 open Lake DSL
 
-require aesop from git
-  "https://github.com/leanprover-community/aesop.git" @ "v4.28.0"
-require Example from git "https://github.com/lenianiva/lean4-nix" @ "main" / "templates/dependency"
+require batteries from git
+  "https://github.com/leanprover-community/batteries" @ "v4.28.0"
 
 package Incremental
 
