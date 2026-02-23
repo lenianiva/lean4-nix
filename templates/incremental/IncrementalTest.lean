@@ -1,4 +1,4 @@
 import Incremental
 
-def main := IO.println cirno
+def main := IO.println greeting
 

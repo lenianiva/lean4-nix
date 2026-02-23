@@ -18,17 +18,17 @@
       name = "minimal";
       src = lib.cleanSource ./templates/minimal;
     };
+    dependency-deps = lake.buildDeps {
+      src = lib.cleanSource ./templates/dependency;
+    };
     dependency-manifest = lake.mkPackage {
       name = "Example";
       src = lib.cleanSource ./templates/dependency;
+      lakeDeps = dependency-deps;
       buildLibrary = true;
     };
     incremental-deps = lake.buildDeps {
       src = lib.cleanSource ./templates/incremental;
-      # Override with up to date `dependency` dep
-      depOverrideDeriv = {
-        Example = dependency-manifest;
-      };
     };
     incremental-args = {
       lakeDeps = incremental-deps;
@@ -45,6 +45,41 @@
         lakeArtifacts = incremental-lib;
         installArtifacts = false;
       });
+    # Import `dependency` into `incremental` to test the `.lake` behavior for `lakefile.lean` dependencies
+    incremental-test-dep = let
+      all-deps = dependency-deps // {Example = dependency-manifest;};
+      # Override package-overrides.json to include all deps (incremental + dependency)
+      overridesJson = pkgs.writers.writeJSON "package-overrides.json" {
+        version = "1.1.0";
+        packagesDir = ".lake/packages";
+        packages = map (name: {
+          inherit name;
+          inherited = false;
+          type = "path";
+          dir = ".lake/packages/${name}";
+        }) (builtins.attrNames all-deps);
+        name = "Incremental";
+        lakeDir = ".lake";
+      };
+    in
+      lake.mkPackage {
+        name = "IncrementalTest";
+        src = lib.cleanSource ./templates/incremental;
+        lakeDeps = all-deps;
+        prePatch = ''
+          substituteInPlace lakefile.lean --replace-fail "package Incremental" 'require Example from "${dependency-manifest}"
+
+          package Incremental'
+          substituteInPlace Incremental.lean --replace-fail "import Batteries" 'import Batteries
+          import Example'
+          substituteInPlace IncrementalTest.lean --replace-fail "IO.println greeting" "IO.println cirno"
+        '';
+        preConfigure = ''
+          mkdir -p .lake
+          ln -s ${overridesJson} .lake/package-overrides.json
+        '';
+        installArtifacts = false;
+      };
   in
     lib.mapAttrs' (name: value: lib.nameValuePair "${prefix}${name}" value)
     rec {
@@ -90,7 +125,7 @@
           hakkero.succeed("example")
         '';
       });
-      inherit dependency-manifest incremental-lib incremental-test;
+      inherit dependency-manifest incremental-lib incremental-test incremental-test-dep;
     };
   lake2nix = pkgs.callPackage lib/lake.nix {};
 in
