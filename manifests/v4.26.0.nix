@@ -1,6 +1,7 @@
 {
   tag = "v4.26.0";
   rev = "d8204c9fd894f91bbb2cdfec5912ec8196fd8562";
+  hash = "sha256-KDHE2RX1H+QKojrOUbJjIiKlv2kCvAwp4H8V81tDHbQ=";
   toolchain = {
     aarch64-linux = {
       url = "https://github.com/leanprover/lean4/releases/download/v4.26.0/lean-4.26.0-linux_aarch64.tar.zst";

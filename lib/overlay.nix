@@ -4,37 +4,39 @@ let
     src,
     bootstrap,
     buildLeanPackage ? null,
-  }: final: prev:
-    prev
-    // rec {
-      lean =
-        (prev.callPackage ./packages.nix {inherit src bootstrap buildLeanPackage;})
-        // {
-          lake = lean.Lake-Main.executable;
-        };
-    };
+  }: final: prev: rec {
+    lean =
+      (prev.callPackage ./packages.nix {inherit src bootstrap buildLeanPackage;})
+      // {
+        lake = lean.Lake-Main.executable;
+      };
+  };
   readFromGit = {
     args,
     bootstrap,
     buildLeanPackage ? null,
-  }:
-    readSrc {
-      src = builtins.fetchGit args;
-      inherit bootstrap buildLeanPackage;
-    };
+  }: final: prev: rec {
+    lean =
+      (prev.callPackage ./packages.nix {
+        inherit bootstrap buildLeanPackage;
+        src = prev.fetchgit args;
+      })
+      // {
+        lake = lean.Lake-Main.executable;
+      };
+  };
   readRev = {
     rev,
     bootstrap,
     buildLeanPackage ? null,
     tag,
     toolchain,
+    hash,
   }:
     readFromGit {
       args = {
         url = "https://github.com/leanprover/lean4.git";
-        shallow = true;
-        ref = "refs/tags/${tag}";
-        inherit rev;
+        inherit rev hash;
       };
       inherit bootstrap buildLeanPackage;
     };
