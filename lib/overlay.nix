@@ -58,7 +58,7 @@ let
         binary = true;
       }
       else toolchain;
-    tag = builtins.addErrorContext "Only leanprover/lean4:{tag} toolchains are supported" (
+    tag = builtins.addErrorContext "Only leanprover/lean4:{tag} toolchains for stable versions are supported." (
       builtins.head (builtins.match "^[[:space:]]*leanprover/lean4:([a-zA-Z0-9\\-\\.]+)[[:space:]]*$" config.toolchain)
     );
     overlay-set = builtins.getAttr tag tags;

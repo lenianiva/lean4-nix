@@ -63,8 +63,8 @@ easiest to the hardest to use:
 
 - `readToolchainFile { toolchain; binary ? true; }`: Reads the toolchain from a
   file. Due to Nix's pure evaluation principle, this only supports
-  `leanprover/lean4:{tag}` based `lean-toolchain` files. For any other
-  toolchains, use `readRev` or `readFromGit`.
+  `leanprover/lean4:{tag}` based `lean-toolchain` files where the tag refers to
+  a stable version. For any other toolchains, use `readRev` or `readFromGit`.
 - `readToolchain { toolchain; binary ? true };`: `readToolchainFile` but with
   its contents provided directly.
 - `readBinaryToolchain manifest`: Reads the binary toolchain from a manifest
