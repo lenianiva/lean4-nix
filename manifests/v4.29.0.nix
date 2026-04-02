@@ -165,6 +165,10 @@
           ".*\.in"
           "Leanc\.lean"
         ];
+        preConfigure = ''
+          # CMakeLists expects ../tests from repo root.
+          substituteInPlace CMakeLists.txt --replace 'add_subdirectory(../tests' 'add_subdirectory(${src}/tests'
+        '';
         dontBuild = true;
         installPhase = ''
           mkdir $out $leanc_src
@@ -186,6 +190,10 @@
           "leanshell"
           "leanmain"
         ];
+        preConfigure = ''
+          # CMakeLists expects ../tests from repo root.
+          substituteInPlace CMakeLists.txt --replace 'add_subdirectory(../tests' 'add_subdirectory(${src}/tests'
+        '';
         installPhase = ''
           mkdir -p $out
           mv lib/ $out/
