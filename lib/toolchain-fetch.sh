@@ -10,8 +10,18 @@ if [ -z "$VERSION" ]; then
 	exit 1
 fi
 
+REPO=https://github.com/leanprover/lean4
+
+printf "tag = \"v$VERSION\";\n"
+
 # Cut the revision by tag
-REV=$(git ls-remote -t https://github.com/leanprover/lean4 v$VERSION | cut -f1)
+rev=$(git ls-remote -t $REPO v$VERSION | cut -f1)
+
+printf "rev = \"$rev\";\n"
+repo_info=$(nix flake prefetch --extra-experimental-features 'nix-command flakes' --json git+$REPO?allRefs=1&ref=$rev)
+
+hash=$(jq -r '.hash' <<< "$repo_info")
+printf "hash = \"$hash\";\ntoolchain = {\n"
 
 declare -A targets=(
 	[x86_64-linux]=linux
@@ -22,8 +32,6 @@ declare -A targets=(
 
 # Print Nix code
 
-printf "tag = \"v$VERSION\";\n"
-printf "rev = \"$REV\";\ntoolchain = {\n"
 
 for target in "${!targets[@]}"; do
 	target_name=${targets[$target]}
