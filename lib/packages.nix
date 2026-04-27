@@ -10,7 +10,6 @@ args @ {
   lean-bin ? null,
   # Or provide sources and bootstrapping functions
   src ? null,
-  cadical ? null,
   bootstrap ? null,
 }: let
   lean = callPackage bootstrap (args

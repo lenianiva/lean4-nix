@@ -43,10 +43,10 @@ let
       inherit bootstrap buildLeanPackage overlay;
     };
   # Fetches a binary Lean
-  readBinaryToolchain = manifest: final: prev:
-    prev
+  readBinaryToolchain = manifest @ {overlay ? final: prev: {}, ...}: final: prev:
+    (overlay final prev)
     // {
-      lean = (prev.callPackage ./toolchain.nix {}).fetchBinaryLean manifest;
+      lean = (final.callPackage ./toolchain.nix {}).fetchBinaryLean manifest;
     };
   tags =
     builtins.mapAttrs (tag: manifest: {
