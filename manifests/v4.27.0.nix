@@ -19,6 +19,7 @@
       hash = "sha256-AefZEwRkvH2Ee67OB9+yxPSN0C5xtLmnfUhJFOpZTvs=";
     };
   };
+  inherit (import ./v4.19.0.nix) overlay;
   inherit (import ./v4.23.0.nix) bootstrap;
   # Custom buildLeanPackage with lndir-based depRoot to fix module public imports
   # The issue: Lean 4.27.0's new `module` keyword with `public import` creates transitive

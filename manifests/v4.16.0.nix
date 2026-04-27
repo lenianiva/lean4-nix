@@ -9,5 +9,6 @@
     aarch64-darwin.hash = "sha256-V2LlrrK6IZCAZYkDZieYfI2R5JxUzGz5C5bt7GUngl0=";
   };
 
+  inherit (import ./v4.12.0.nix) overlay;
   inherit (import ./v4.14.0.nix) bootstrap;
 }

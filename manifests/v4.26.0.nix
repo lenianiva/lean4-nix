@@ -19,5 +19,6 @@
       hash = "sha256-nsmYcAg2SOMRZJ5K3EWFRWvl0JXN5kwFwYHTV05BT74=";
     };
   };
+  inherit (import ./v4.19.0.nix) overlay;
   inherit (import ./v4.23.0.nix) bootstrap buildLeanPackage;
 }

@@ -7,6 +7,7 @@
     x86_64-darwin.hash = "sha256-kExa2JYk+cc+A3Y3j0lfIaXsB9LiNElFo9vSnMpVXsU=";
     aarch64-darwin.hash = "sha256-5azyw6ZlID4f+q9EXwwArB0+3/UUAqjMCNPQ1iF1/oI=";
   };
+  inherit (import ./v4.19.0.nix) overlay;
   inherit (import ./v4.22.0.nix) buildLeanPackage;
   bootstrap = {
     debug ? false,

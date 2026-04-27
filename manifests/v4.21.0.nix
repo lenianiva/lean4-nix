@@ -7,5 +7,5 @@
     x86_64-darwin.hash = "sha256-28ikkTuJkmtG8pmKPytjf7ilpvdRGN5/zYTMf/J0vFI=";
     aarch64-darwin.hash = "sha256-49fTHdD9t7/RpLlT4Tsyzv6E3wTflhBv+Krad1OG2os=";
   };
-  inherit (import ./v4.19.0.nix) bootstrap;
+  inherit (import ./v4.19.0.nix) overlay bootstrap;
 }
