@@ -1,6 +1,17 @@
 {
   tag = "v4.29.1";
   rev = "f72c35b3f637c8c6571d353742168ab66cc22c00";
+  overlay = final: prev: {
+    cadical = prev.cadical.overrideAttrs {
+      version = "2.1.2";
+      src = prev.fetchFromGitHub {
+        owner = "arminbiere";
+        repo = "cadical";
+        rev = "rel-2.1.2";
+        hash = "sha256-fhvQd/f8eaw7OA2/XoOTVOnQxSSxUvugu6VWo2nmpQ0=";
+      };
+    };
+  };
   toolchain = {
     aarch64-linux = {
       url = "https://github.com/leanprover/lean4/releases/download/v4.29.1/lean-4.29.1-linux_aarch64.tar.zst";
