@@ -18,7 +18,7 @@ printf "tag = \"v$VERSION\";\n"
 rev=$(git ls-remote -t $REPO v$VERSION | cut -f1)
 
 printf "rev = \"$rev\";\n"
-repo_info=$(nix flake prefetch --extra-experimental-features 'nix-command flakes' --json git+$REPO?allRefs=1&ref=$rev)
+repo_info=$(nix flake prefetch --extra-experimental-features 'nix-command flakes' --json git+$REPO?ref=refs/tags/v$VERSION)
 
 hash=$(jq -r '.hash' <<< "$repo_info")
 printf "hash = \"$hash\";\ntoolchain = {\n"

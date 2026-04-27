@@ -1,6 +1,7 @@
 {
   tag = "v4.25.1";
   rev = "259135d0896efb39af2233e8c8ec8e0f46ad67d7";
+  hash = "sha256-Ksaqyam5u4PFgrChAccauFt6V+t9TtssXxR8PWUt9Yc=";
   toolchain = {
     aarch64-linux = {
       url = "https://github.com/leanprover/lean4/releases/download/v4.25.1/lean-4.25.0-linux_aarch64.tar.zst";

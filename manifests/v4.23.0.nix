@@ -1,6 +1,7 @@
 {
   tag = "v4.23.0";
   rev = "50aaf682e9b74ab92880292a25c68baa1cc81c87";
+  hash = "sha256-wcB3HxSNukIOttjrfvDQB5IkmhYG9w/UMeOfCQ1+lvo=";
   toolchain = {
     aarch64-linux.hash = "sha256-NZyUraVyNE/38V/A5+wylntaXMFODPopRTdyeWkbI1Y=";
     x86_64-linux.hash = "sha256-7NAo1vZCthtFHIaHrusk3VN4n7/ct9StuPXPYOsgIro=";
