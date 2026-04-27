@@ -94,7 +94,7 @@
               // {
                 name = lib.strings.sanitizeDerivationName args.name;
                 stdenv = bareStdenv;
-                inherit (stdenv) system;
+                inherit (stdenv.hostPlatform) system;
                 buildInputs = (args.buildInputs or []) ++ [coreutils];
                 builder = stdenv.shell;
                 args = [

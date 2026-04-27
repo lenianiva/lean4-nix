@@ -4,7 +4,6 @@
   pkgs,
   fetchurl,
   stdenv,
-  system,
   zstd,
   clang,
   lld,
@@ -14,7 +13,9 @@
   writeShellApplication,
   autoPatchelfHook,
   ...
-}: rec {
+}: let
+  inherit (stdenv.hostPlatform) system;
+in rec {
   toolchain-fetch = writeShellApplication {
     name = "toolchain-fetch";
     runtimeInputs = with pkgs; [jq git wget coreutils nix];
