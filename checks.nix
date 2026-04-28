@@ -136,6 +136,15 @@ in
     leanc = pkgs.lean.leanc;
     # Tests that the executable can run.
     lean-bin-run = pkgs-bin.testers.testVersion {package = pkgs-bin.lean;};
+
+    cadical =
+      pkgs.runCommand "bv-decide" {
+        nativeBuildInputs = [pkgs.cadical];
+      } ''
+        set -euo pipefail
+        ${pkgs.lean.lean-all}/bin/lean ${./test/bv-decide.lean}
+        touch $out
+      '';
   }
   // (generate-lake-tests {
     lake = lake2nix-bin;
