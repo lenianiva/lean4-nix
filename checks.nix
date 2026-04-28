@@ -134,6 +134,7 @@ in
     leanc-bin = pkgs-bin.lean.leanc;
     lean = pkgs.lean;
     leanc = pkgs.lean.leanc;
+    lean-test = pkgs.lean.test;
     # Tests that the executable can run.
     lean-bin-run = pkgs-bin.testers.testVersion {package = pkgs-bin.lean;};
 
