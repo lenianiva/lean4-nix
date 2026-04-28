@@ -335,7 +335,7 @@
           test = buildCMake {
             name = "lean-test-${desc}";
             realSrc = lib.sourceByRegex src ["src.*" "tests.*"];
-            buildInputs = [gmp libuv perl git cadical];
+            buildInputs = [gmp libuv perl git cadical pkg-config];
             preConfigure = ''
               cd src
             '';
