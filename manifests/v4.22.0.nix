@@ -7,7 +7,7 @@
     x86_64-darwin.hash = "sha256-dkvEKn4N+lr2Qcl+BIqJ+6lNFImv1sPtewE0JhcjrcA=";
     aarch64-darwin.hash = "sha256-hLIaeNwtOwiyNRePru5NpcZQ2tWp/K+xIQIqaX1sVuI=";
   };
-  inherit (import ./v4.19.0.nix) bootstrap;
+  inherit (import ./v4.19.0.nix) overlay bootstrap;
   buildLeanPackage = {
     lean,
     lean-leanDeps ? lean,

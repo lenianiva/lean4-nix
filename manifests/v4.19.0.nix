@@ -7,6 +7,17 @@
     x86_64-darwin.hash = "sha256-YzK6/+EYAOAGrAl3G2mNNV2Q/TCyfoH/SSStW8q1j5w=";
     aarch64-darwin.hash = "sha256-lNQkb9kKFSpIGUGUmNPkXJQaMWOKV6Co4yVhSUq2zqc=";
   };
+  overlay = final: prev: {
+    cadical = prev.cadical.overrideAttrs {
+      version = "2.1.2";
+      src = prev.fetchFromGitHub {
+        owner = "arminbiere";
+        repo = "cadical";
+        rev = "rel-2.1.2";
+        hash = "sha256-fhvQd/f8eaw7OA2/XoOTVOnQxSSxUvugu6VWo2nmpQ0=";
+      };
+    };
+  };
   bootstrap = {
     debug ? false,
     stage0debug ? false,

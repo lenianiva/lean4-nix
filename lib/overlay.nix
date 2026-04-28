@@ -1,14 +1,16 @@
 let
   manifests = import ../manifests;
-  readSrc = {
+  readSrc = args @ {
     src,
     bootstrap,
     buildLeanPackage ? null,
+    overlay ? final: prev: {},
+    ...
   }: final: prev:
-    prev
+    (args.overlay final prev)
     // rec {
       lean =
-        (prev.callPackage ./packages.nix {inherit src bootstrap buildLeanPackage;})
+        (final.callPackage ./packages.nix {inherit src bootstrap buildLeanPackage;})
         // {
           lake = lean.Lake-Main.executable;
         };
@@ -16,16 +18,18 @@ let
   readFromGit = {
     args,
     bootstrap,
+    overlay ? final: prev: {},
     buildLeanPackage ? null,
   }:
     readSrc {
       src = builtins.fetchGit args;
-      inherit bootstrap buildLeanPackage;
+      inherit bootstrap buildLeanPackage overlay;
     };
   readRev = {
     rev,
     bootstrap,
     buildLeanPackage ? null,
+    overlay ? final: prev: {},
     tag,
     toolchain,
   }:
@@ -36,13 +40,13 @@ let
         ref = "refs/tags/${tag}";
         inherit rev;
       };
-      inherit bootstrap buildLeanPackage;
+      inherit bootstrap buildLeanPackage overlay;
     };
   # Fetches a binary Lean
-  readBinaryToolchain = manifest: final: prev:
-    prev
+  readBinaryToolchain = manifest @ {overlay ? final: prev: {}, ...}: final: prev:
+    (overlay final prev)
     // {
-      lean = (prev.callPackage ./toolchain.nix {}).fetchBinaryLean manifest;
+      lean = (final.callPackage ./toolchain.nix {}).fetchBinaryLean manifest;
     };
   tags =
     builtins.mapAttrs (tag: manifest: {
