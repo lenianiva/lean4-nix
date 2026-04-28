@@ -92,7 +92,8 @@ corresponding manifest in `manifests/`. In this case, a common solution is to
 import the `bootstrap` and `buildLeanPackage` functions from the nearest major
 version and feed it to `readRev`. In cases where there is a major change to the
 `bootstrap`/`buildLeanPackage` function, the user may need to create the
-function on their own.
+function on their own. The user may need to create a custom `overlay` function
+to pull in the necessary `cadical` and other build dependency versions.
 
 ### `pkgs.lean`
 
@@ -159,6 +160,17 @@ in a non-derivation format. Generally, the attributes available are:
 
 The Lean version is not listed in the `manifests/` directory. Use `readRev` or
 `readFromGit` instead.
+
+### Cadical Failure
+
+``` sh
+bv-decide.lean:19:2: error: Failed to execute external prover:
+could not execute external process 'cadical'
+```
+
+When using the built-from-source overlay, the overlay produces a pinned
+`cadical` version. This `cadical` version should be present in any environment
+(as `nativeBuildInputs`).
 
 ## Development
 
