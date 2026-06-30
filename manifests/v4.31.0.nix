@@ -78,6 +78,7 @@
         installPhase = ''
           mkdir -p $out
           cp -r * $out/
+          rm -r $out/AGENTS.md
         '';
       };
       args =
