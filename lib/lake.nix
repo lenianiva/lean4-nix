@@ -12,7 +12,7 @@
   importLakeManifest = manifestFile: let
     manifest = lib.importJSON manifestFile;
   in
-    lib.warnIf (manifest.version != "1.1.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
+    lib.warnIf (manifest.version != "1.1.0" && manifest.version != "1.2.0") ("Unknown version: " + builtins.toString manifest.version) manifest;
   # An internal wrapper around `mkDerivation` which sets up the lake manifest and runs `lake build`. End users should call `buildDeps` and `mkPackage` instead
   mkLakeDerivation = args @ {
     # Name of the build target used to build shared and static facets. When building with `mkPackage` this is not used as the `buildPhase` is overriden
