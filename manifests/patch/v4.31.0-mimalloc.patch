@@ -1,0 +1,28 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6aa7bf15479..7f33f788896 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -121,18 +121,14 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Emscripten")
+ endif()
+
+ if(USE_MIMALLOC)
+-  FetchContent_Declare(
++  ExternalProject_Add(
+     mimalloc
+-    GIT_REPOSITORY https://github.com/microsoft/mimalloc
+-    GIT_TAG v2.2.3
+-    # Unnecessarily deep directory structure, but it saves us from a complicated
+-    # stage0 update for now. If we ever update the other dependencies like
+-    # cadical, it might be worth reorganizing the directory structure.
+-    SOURCE_DIR
+-    "${CMAKE_BINARY_DIR}/mimalloc/src/mimalloc"
++	 PREFIX mimalloc
++    SOURCE_DIR "/nix/store/9ljhaakj0s6fdrzhcr5r9030d9w83gg9-source"
+     EXCLUDE_FROM_ALL
++    INSTALL_COMMAND ""
+   )
+-  FetchContent_MakeAvailable(mimalloc)
++  list(APPEND EXTRA_DEPENDS mimalloc)
+ endif()
+
+ if(NOT STAGE1_PREV_STAGE)
