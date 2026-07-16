@@ -114,6 +114,7 @@
             ...
           }: {
             virtualisation.diskSize = 2048;
+            virtualisation.memorySize = 4096;
             networking = {hostName = "hakkero";};
             environment = {
               variables.EDITOR = "vim";
