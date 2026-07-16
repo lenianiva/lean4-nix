@@ -1,3 +1,12 @@
+# NOTE: batteries v4.31.0 has an import cycle between its `Batteries` and
+# `BatteriesRecycling` libraries, so building its `shared`/`static` facets
+# fails with "build cycle detected" and batteries cannot be used as a Lake
+# dependency on this toolchain (directly or transitively, e.g. via aesop).
+# The fix (https://github.com/leanprover-community/batteries/pull/1868) was
+# first released in batteries v4.32.0; no batteries release for the v4.31.0
+# toolchain contains it. The batteries-dependent checks are skipped for this
+# version in checks.nix.
+# See https://github.com/leanprover-community/batteries/issues/1832
 {
   tag = "v4.31.0";
   rev = "68218e876d2a38b1985b8590fff244a83c321783";
