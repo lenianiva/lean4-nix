@@ -34,6 +34,10 @@
     debug ? false,
     stage0debug ? false,
     extraCMakeFlags ? [],
+    # Extra `buildInputs` for every `buildCMake` derivation, so later manifests
+    # can reuse this bootstrap when the toolchain grows a new dependency
+    # (e.g. OpenSSL in v4.32.0).
+    extraBuildInputs ? [],
     stdenv,
     lib,
     cmake,
@@ -103,12 +107,6 @@
               cmake
               mimalloc-src
             ];
-            buildInputs = [
-              gmp
-              libuv
-              llvmPackages.llvm
-              pkg-config
-            ];
             # https://github.com/NixOS/nixpkgs/issues/60919
             hardeningDisable = ["all"];
             dontStrip = args.debug or debug;
@@ -119,6 +117,15 @@
           }
           // args
           // {
+            buildInputs =
+              (args.buildInputs
+                or [
+                gmp
+                libuv
+                llvmPackages.llvm
+                pkg-config
+              ])
+              ++ extraBuildInputs;
             src =
               args.realSrc or (sourceByRegex args.src [
                 "[a-z].*"
