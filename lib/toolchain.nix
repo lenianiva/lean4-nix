@@ -9,7 +9,6 @@
   lld,
   callPackage,
   makeWrapper,
-  fixDarwinDylibNames,
   writeShellApplication,
   autoPatchelfHook,
   ...
@@ -46,10 +45,18 @@ in rec {
     };
     mkDerivation = args @ {nativeBuildInputs ? [], ...}:
       stdenv.mkDerivation (args
+        // lib.optionalAttrs stdenv.isDarwin {
+          # Upstream's darwin release binaries are already signed and already
+          # resolve through `@rpath`, so nothing here needs patching. Rewriting
+          # them is what breaks them: both `install_name_tool` (via
+          # `fixDarwinDylibNames`, dropped below) and `strip` invalidate the
+          # arm64 signature and push the Mach-O load commands past the header
+          # pad. See #76.
+          dontStrip = true;
+        }
         // {
           nativeBuildInputs =
             nativeBuildInputs
-            ++ lib.optional stdenv.isDarwin fixDarwinDylibNames
             ++ lib.optionals stdenv.isLinux [autoPatchelfHook stdenv.cc.cc.lib];
         });
     compile-bin = lib.makeBinPath [lld];
