@@ -90,7 +90,7 @@
         linkFlags ? [],
         executableName ? lib.toLower name,
         libName ? name,
-        sharedLibName ? libName,
+        sharedLibName ? "${lib.toLower name}_${libName}",
         srcTarget ? "..#stage0",
         srcArgs ? "(\${args[*]})",
         lean-final ? lean-final',
