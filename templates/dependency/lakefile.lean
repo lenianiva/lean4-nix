@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 require aesop from git
-  "https://github.com/leanprover-community/aesop.git" @ "v4.34.0"
+  "https://github.com/leanprover-community/aesop.git" @ "v4.35.0"
 
 package Example
 
