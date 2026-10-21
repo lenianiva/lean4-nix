@@ -382,6 +382,7 @@
               mkdir -p $out/bin
               leanc ${staticLibLinkWrapper (lib.concatStringsSep " " (objPaths ++ map (d: "${d}/*.a") allStaticLibDeps))} \
                 -o $out/bin/${executableName} \
+                ${lib.optionalString (stdenv.isDarwin && withSharedStdlib) "-Wl,-rpath,${lean-final.leanshared}"} \
                 ${lib.concatStringsSep " " allLinkFlags}
             '') {};
         }
