@@ -432,6 +432,7 @@
               perl
               git
               cadical
+              pkg-config
             ];
             preConfigure = ''
               cd src
